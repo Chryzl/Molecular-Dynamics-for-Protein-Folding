@@ -34,7 +34,7 @@ christian.nix@tum.de}
 \maketitle
 
 \begin{abstract}
-\TODO{Abstract to be added in the end.}
+\TODO{Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.}
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -43,6 +43,42 @@ christian.nix@tum.de}
 
 \section{Introduction}
 \cite{key}
+
+% Rough outline in bullets:
+% - Protein backround in genreal:
+%   - What are proteins
+%   - Why are they important/in what ways do they impact our lives
+%   - Protein seq -(Anfinsen's dogma)-> structure --> function
+%   - This is why knowing the structure is important
+
+% - Protein folding problem (really get into it):
+%   - What is the protein folding problem
+%   - How is protein strucutre (primary, secondary, tertiary, quaternary structure)
+%   - What do we know about folding
+%       - Primarily driven by thermodynamics (minimizing free energy) know this from e.g. de novo
+%       - Entropy only seocondary, contrary to earlier beliefs
+%       ==> We end up with a folding funnel (early studied mathemetically as random processes)
+%   - Since AF, predicting final, lowest energy structure is mostly solved
+%   - However, dynamics, folding pathways, binding, etc. cannot be predicted by AF
+%       - Important for understanding function, since proteins are dynamic and change conformation during function
+
+% - How protein folding is studied:
+%   - Experimental methods (laser for fast folders, etc.) BUT expensive and limited to what we can (abstractly) measure
+%   - Computational methods
+%       - Physics-based (MD simulations)
+%           - Pros: detailed, physics-based, can study dynamics (we can actually SEE the system under study)
+%           - Cons: computationally expensive, limited timescales (can only study small proteins or short timescales), force-field accuracy, etc.
+%   - How does MD simulate protein folding
+%       - MD explores conformational space following the Boltzmann distribution (at equilibrium)
+%       - Running either long enough, or many short simulations, or using enhanced sampling methods, etc. we can sample folding events
+%       - From these, we can extract folding pathways, intermediates, kinetics, thermodynamics
+
+% - Aim of this work:
+%   - Investigate protein folding dynamics using MD simulations-based approaches
+%   - Scope of this work:
+%       - Overview over how to study the folding process in terms of the free energy surface via collective variables (historic, and SOTA models, etc.)
+%       - Using Markov State Models (MSMs) to model folding kinetics and pathways (which in turn are the basis for retrieving pathways, intermediates, etc.) 
+%   - Applying the above to a model protein system to demonstrate the approaches and HOPEFULLY do some minor "novel" thing in this seminar paper for my University course
 
 \section*{Acknowledgment}
 
