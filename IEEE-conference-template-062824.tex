@@ -74,11 +74,31 @@ christian.nix@tum.de}
 %       - From these, we can extract folding pathways, intermediates, kinetics, thermodynamics
 
 % - Aim of this work:
-%   - Investigate protein folding dynamics using MD simulations-based approaches
+%   - Literature review and light practical work on how to investigate protein folding dynamics using MD simulations-based approaches
 %   - Scope of this work:
 %       - Overview over how to study the folding process in terms of the free energy surface via collective variables (historic, and SOTA models, etc.)
 %       - Using Markov State Models (MSMs) to model folding kinetics and pathways (which in turn are the basis for retrieving pathways, intermediates, etc.) 
-%   - Applying the above to a model protein system to demonstrate the approaches and HOPEFULLY do some minor "novel" thing in this seminar paper for my University course
+%   - Applying the above to a model protein system to demonstrate the approaches and HOPEFULLY do some minor "novel" thing (i.e. change some parameters and see what result changes etc.) in this seminar paper for my University course
+
+% - Collective variables (CVs) and free energy surfaces (FES):
+%   - What are CVs
+%   - Why get them:
+%       - Allow to visualize high-dimensional free energy landscape in low dimensions --> interpretable, intuitive, etc.
+%       - Basis for enhanced sampling methods (e.g. metadynamics)
+%       - By biasing MDs along CVs, we can sample rare events (e.g. folding) more efficiently, accessing relevant conformations faster
+%   ==> Thus CVs are an essential backbone for studying protein folding dynamics via MD simulations
+
+%   - But what can CVs pratcically not solve: If we want deep insights, the projection onto low-dimensional CVs can lead to loss of important information (histeric problem in MD analysis, i.e., hiding important states/transitions). But also enhanced sampling methods are not the ultimate solution for deep insights and e.g. pathway identification including kinetics and rate constants
+
+% Free-Energy Landscape for ß Hairpin Folding from Combined Parallel Tempering and Metadynamics | Giovanni Bussi,* Francesco Luigi Gervasio,* Alessandro Laio,† and Michele Parrinello ==> CVs are used to drive metadynamics simulations but they have problems if they hide slow degrees of freedom, so they try to fix that by merging parallel tempering
+% CVs go back FAR: Statistical mechanics of isomerization dynamics in liquids and the transition state approximation | Chandler 1978, isomerization but they do their math along a reaction coordinate q
+% ML CVs: https://arxiv.org/pdf/2107.03943 (2021) --> Also very interesting, they mention many works. ==> Improtnatly, CVs need to be classified into whether they are applied after the simulation (i.e., for analysis, visualization, etc.) or during the simulation (i.e., for enhanced sampling)
+% Review on CVs: Collective variables for the study of long-time kinetics from molecular trajectories: Theory and methods | Frank Noé --> rather "new" (2017)
+% --> They find that a variational approach to solve the eifenvalue problem of the transfer operator is a more general form compared to how it is done in MSMs or TICA (not meaning that they become obsolete, but that they are special cases of this more general approach)
+
+% Potential Project:
+% - A general concern with TICA and the variational approach is computational efficiency for large systems and long trajectories. The computational effort scales with N^2 for N input coordinates, which becomes intractable if huge basis sets are used, such as the set of distances between all residues or atoms of a protein. The recently proposed hierarchical TICA method can obtain a coarse-grained yet accurate solution of the full TICA problem more efficiently [60], but there is still room for improvements in this area. (from Noe review)
+
 
 \section*{Acknowledgment}
 
