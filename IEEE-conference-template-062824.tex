@@ -18,6 +18,7 @@
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
 \begin{document}
 
 \title{
@@ -42,15 +43,13 @@ christian.nix@tum.de}
 \end{IEEEkeywords}
 
 \section{Introduction}
-\cite{key}
-
-% Rough outline in bullets:
 % - Protein backround in genreal:
 %   - What are proteins
 %   - Why are they important/in what ways do they impact our lives
 %   - Protein seq -(Anfinsen's dogma)-> structure --> function
 %   - This is why knowing the structure is important
 
+\subsection{Protein Folding and its Importance}
 % - Protein folding problem (really get into it):
 %   - What is the protein folding problem
 %   - How is protein strucutre (primary, secondary, tertiary, quaternary structure)
@@ -61,6 +60,9 @@ christian.nix@tum.de}
 %   - Since AF, predicting final, lowest energy structure is mostly solved
 %   - However, dynamics, folding pathways, binding, etc. cannot be predicted by AF
 %       - Important for understanding function, since proteins are dynamic and change conformation during function
+
+So far, we have established that knowing the 3D structure of proteins is important for understanding their function and role in biological processes. However, the process of protein folding itself is highly complex and not yet fully understood \cite{tsuboyama2023mega}. Anfinsen's Nobel prize-winning work demonstrated that the primary structure (i.e., the amino acid sequence) of a protein determines its final 3D structure, implying that all information necessary for folding is self-contained \cite{anfinsen1973principles}. However, if a protein were to randomly sample all possible conformations its primary sequence could take, the time required to fold would be much beyond the biologically relevant timescales (milliseconds to seconds) observed in nature \cite{levinthal1969fold, dobson2003protein}. For example, assuming 10 possible configurations per amino acid residue, a small protein of 100 residues would have $10^{100}$ possible conformations. A rotation around a single bond takes roughly $10^{-12}$ s \cite{lee2025ultrafast}, leading to a total time of $10^{88}$ s or roughly $10^{80}$ years to sample all conformations. This discrepancy is known as Levinthal's paradox \cite{levinthal1969fold}. Since we know that proteins do fold on biologically relevant timescales, there must be some guiding principles that direct the folding process efficiently.
+
 
 % - How protein folding is studied:
 %   - Experimental methods (laser for fast folders, etc.) BUT expensive and limited to what we can (abstractly) measure
@@ -73,6 +75,13 @@ christian.nix@tum.de}
 %       - Running either long enough, or many short simulations, or using enhanced sampling methods, etc. we can sample folding events
 %       - From these, we can extract folding pathways, intermediates, kinetics, thermodynamics
 
+% Here, importantly mention collection variables as reaction cooridnates and mention MSMs as a way to model kinetics from MD simulations
+
+\subsection{Transfer Operator Formalism}
+% - Explain all the math necessary for the TICA and MSM formalism via the transfer operator
+
+
+\subsection{Aim and Scope}
 % - Aim of this work:
 %   - Literature review and light practical work on how to investigate protein folding dynamics using MD simulations-based approaches
 %   - Scope of this work:
@@ -80,6 +89,7 @@ christian.nix@tum.de}
 %       - Using Markov State Models (MSMs) to model folding kinetics and pathways (which in turn are the basis for retrieving pathways, intermediates, etc.) 
 %   - Applying the above to a model protein system to demonstrate the approaches and HOPEFULLY do some minor "novel" thing (i.e. change some parameters and see what result changes etc.) in this seminar paper for my University course
 
+\section{Collective Variables and Free Energy Surfaces}
 % - Collective variables (CVs) and free energy surfaces (FES):
 %   - What are CVs
 %   - Why get them:
@@ -99,6 +109,9 @@ christian.nix@tum.de}
 % Review on CVs: Collective variables for the study of long-time kinetics from molecular trajectories: Theory and methods | Frank Noé --> rather "new" (2017)
 % --> They find that a variational approach to solve the eifenvalue problem of the transfer operator is a more general form compared to how it is done in MSMs or TICA (not meaning that they become obsolete, but that they are special cases of this more general approach)
 % Book on ICA (and AMUSE pp 341ff): Independent Component Analysis, Aapo Hyvarinen, Juha Karhunen, and Erkki Oja, 2001, https://www.cs.helsinki.fi/u/ahyvarin/papers/bookfinal_ICA.pdf
+
+\section{Markov State Models and Protein Folding Kinetics}
+% - Talk about what MSMs are, why people first started using them for protein folding (intuition), and then talk about the formalism in transfer operator language
 
 % Potential Projects
 % ------------
