@@ -91,7 +91,7 @@ In molecular dynamics, the motion of atoms is propagated using classical mechani
 
 \footnotetext[1]{Since MD simulations are fully controlled by the user, the forces acting on the system do not have to correspond strictly to physical reality but can also be altered, e.g., by mixing classical mechanics with quantum mechanical effects \cite{warshel1976theoretical}.}
 
-To extract meaningful insights from MD simulations, their trajectories must be analyzed appropriately. Some properties, such as the temperature, pressure, or distances, can be computed directly from (averages over) the frames of the trajectory. However, many properties of interest, such as free energies which determine folding pathways and their kinetics, depend not on the frames directly, but rather on the distribution of conformations they represent, i.e., the accessible conformational space. \cite[pp.~167ff.]{frenkel2002understanding} 
+To extract meaningful insights from MD simulations, their trajectories must be analyzed appropriately. Some properties, such as the temperature, pressure, or distances, can be computed directly from (averages over) the frames of the trajectory. However, many properties of interest, such as free energies which determine folding pathways and their kinetics, depend not on the frames directly, but rather on the distribution of conformations they represent, i.e., the accessible conformational space. \cite[pp.~167ff.]{frenkel2002understanding} Analyzing the conformational space is non-trivial due its high dimensionality (e.g., three special coordinates per atom). To enable interpretation, we can project the high-dimensional conformational space onto fewer collective variables (CVs), along which we, for example, can compute free energy surfaces (FES). \cite{fiorin2013using} Collective Variables are detailed in Section \TODO{Ref}. For extracting long-timescale kinetics, a probabilistic framework such as Markov State Models (MSMs) can be applied \cite{malmstrom2014application}. These will be discussed in detail in Section \TODO{Ref}. MSMs discretize the conformational space into distinct states, enabling the quantitative prediction of transition rates and folding pathways \cite{chodera2014markov}.
 
 \subsection{Transfer Operator Formalism}
 % - Explain all the math necessary for the TICA and MSM formalism via the transfer operator
@@ -119,6 +119,7 @@ To extract meaningful insights from MD simulations, their trajectories must be a
 % Here they show that TICA == specifica version of variational approach https://doi.org/10.1063/1.4811489 (2013)
 % Why TICA in the first place and genrally avout collection variables: https://doi.org/10.1016/j.sbi.2017.02.006 
 % https://arxiv.org/pdf/2202.04164 --> general stuff about CVs too (but in context of enhanced sampling)
+% fiorin2013using --> Using collective variables to drive MD simulations (review paper, nice)
 
 % Free-Energy Landscape for ß Hairpin Folding from Combined Parallel Tempering and Metadynamics | Giovanni Bussi,* Francesco Luigi Gervasio,* Alessandro Laio,† and Michele Parrinello ==> CVs are used to drive metadynamics simulations but they have problems if they hide slow degrees of freedom, so they try to fix that by merging parallel tempering
 % CVs go back FAR: Statistical mechanics of isomerization dynamics in liquids and the transition state approximation | Chandler 1978, isomerization but they do their math along a reaction coordinate q
@@ -129,6 +130,7 @@ To extract meaningful insights from MD simulations, their trajectories must be a
 
 \section{Markov State Models and Protein Folding Kinetics}
 % - Talk about what MSMs are, why people first started using them for protein folding (intuition), and then talk about the formalism in transfer operator language
+% chodera2014markov --> 2014 review paper on MSMs for biomolecular dynamics
 
 % Potential Projects
 % file:///Users/christianmacbook/Downloads/978-3-540-38448-9.pdf --> Chapter 8 talks about some math for MD that needs to be assumed (pdf page 293)
