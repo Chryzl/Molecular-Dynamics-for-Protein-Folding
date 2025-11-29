@@ -110,6 +110,14 @@ If we now consider not the probability distribution $p_t(\mathbf{x})$ directly, 
 \end{align}
 Because both operators $\mathcal{P}(\tau)$ and $\mathcal{T}(\tau)$ fulfill the Chapman-Kolmogorov equation, they can be applied arbitrarily often to propagate the distribution over multiple lag-times $\tau$.
 
+% The key understanding is now that the eigenvalues and eigenfunctions have meaning
+% We ask the reader to think about what happens if we apply the propagator operator on the stationary distribution mu(x) 
+% We can understand the eigenfunctions as those distributions that remain unchanged if propagated
+% In our case of molecular dynamics, these are the slowest processes of the system, which includes folding!
+% The corresponding eigenvalues tell us how fast these processes are (timescales) and they follow the relation XYZ
+% Thus we are interested in approximating these eigenvalues and eigenfunctions from MD data, which we will do in the following sections ref to TICA and MSMs
+
+% Then the last bit of formalism ...
 
 \subsection{Aim and Scope}
 % - Aim of this work:
