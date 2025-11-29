@@ -106,7 +106,7 @@ If we now consider not the probability distribution $p_t(\mathbf{x})$ directly, 
 
 \begin{align}
     u_{t + \tau}(\mathbf{y}) = \mathcal{T}(\tau) u_t(\mathbf{y}) &= \frac{1}{\mu(\mathbf{y})} \int_{\mathbf{x} \in \Omega} p(\mathbf{x}, \mathbf{y}; \tau) \mu(\mathbf{x}) u_t(\mathbf{x}) d\mathbf{x} \\
-    p_t(\mathbf{x}) &= \mu(\mathbf{x}) u_t(\mathbf{x})
+    p_t(\mathbf{x}) &= \mu(\mathbf{x}) u_t(\mathbf{x}) \label{eq:intro:prop_to_transfer}
 \end{align}
 Because both operators $\mathcal{P}(\tau)$ and $\mathcal{T}(\tau)$ fulfill the Chapman-Kolmogorov equation, they can be applied arbitrarily often to propagate the distribution over multiple lag-times $\tau$.
 
@@ -116,6 +116,25 @@ Because both operators $\mathcal{P}(\tau)$ and $\mathcal{T}(\tau)$ fulfill the C
 % In our case of molecular dynamics, these are the slowest processes of the system, which includes folding!
 % The corresponding eigenvalues tell us how fast these processes are (timescales) and they follow the relation XYZ
 % Thus we are interested in approximating these eigenvalues and eigenfunctions from MD data, which we will do in the following sections ref to TICA and MSMs
+
+The key insight of the transfer operator formalism lies in the recognition that the eigenvalues and eigenfunctions of the propagation and transfer operators hold interpretable meanings. This is most easily seen by considering the action of the propagator operator on the stationary distribution $\mu(\mathbf{x})$. Since the system is already at equilibrium, applying the propagator does not change the distribution:
+\begin{equation}
+    \mathcal{P}(\tau) \mu(\mathbf{x}) = \mu(\mathbf{x}) = \phi_1(\mathbf{x})
+\end{equation}
+Thus, the stationary distribution $\mu(\mathbf{x})$ is an eigenfunction $\phi_1(\mathbf{x})$ of the propagator operator with eigenvalue $\lambda_1 = 1$. By Equation \ref{eq:intro:prop_to_transfer}, we can see that the corresponding eigenfunction of the transfer operator is simply the constant function $\psi_1(\mathbf{x}) = \mathbf{1}$. More generally, we can define the eigenvalue problems for both operators as:
+\begin{align}
+    \mathcal{P}(\tau) \phi_i(\mathbf{x}) &= \lambda_i \phi_i(\mathbf{x}) \\
+    \mathcal{T}(\tau) \psi_i(\mathbf{x}) &= \lambda_i \psi_i(\mathbf{x})
+\end{align}
+where we can relate the eigenfunctions of both operators via $\phi_i(\mathbf{x}) = \mu(\mathbf{x}) \psi_i(\mathbf{x})$, following from Equation \ref{eq:intro:prop_to_transfer}. Importantly, the eigenvalues $\lambda_i$ are the same for both operators. If we assume reversibility, the eigenvalues are real and can be bounded by $-1 < \lambda_i \leq 1$. Following convention, we can order the eigenvalues such that $\lambda_1 = 1 > \lambda_2 \geq \lambda_3 \geq ...$. However, we only consider a finite number $m$ of dominant eigenvalues and eigenfunctions. From the Chapman-Kolmogorov equation, it follows that the eigenvalues must follow a relation to a physically interpretable timescale $t_i$ in the form of:
+\begin{equation}
+    \lambda_i = e^{-\tau t_i^{-1}} \quad \Leftrightarrow \quad t_i = -\frac{\tau}{\ln \lambda_i}
+\end{equation}
+These timescales $t_i$ are also referred to as the $i$th implied timescale.
+
+
+
+Thus, we are interested how we can approximate these eigenvalues and eigenfunctions from MD data. 
 
 % Then the last bit of formalism ...
 
