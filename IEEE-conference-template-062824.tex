@@ -110,11 +110,6 @@ If we now consider not the probability distribution $p_t(\mathbf{x})$ directly, 
 \end{align}
 Because both operators $\mathcal{P}(\tau)$ and $\mathcal{T}(\tau)$ fulfill the Chapman-Kolmogorov equation, they can be applied arbitrarily often to propagate the distribution over multiple lag-times $\tau$.
 
-% The key understanding is now that the eigenvalues and eigenfunctions have meaning
-% We ask the reader to think about what happens if we apply the propagator operator on the stationary distribution mu(x) 
-% We can understand the eigenfunctions as those distributions that remain unchanged if propagated
-% In our case of molecular dynamics, these are the slowest processes of the system, which includes folding!
-% The corresponding eigenvalues tell us how fast these processes are (timescales) and they follow the relation XYZ
 % Thus we are interested in approximating these eigenvalues and eigenfunctions from MD data, which we will do in the following sections ref to TICA and MSMs
 
 The key insight of the transfer operator formalism lies in the recognition that the eigenvalues and eigenfunctions of the propagation and transfer operators hold interpretable meanings. This is most easily seen by considering the action of the propagator operator on the stationary distribution $\mu(\mathbf{x})$. Since the system is already at equilibrium, applying the propagator does not change the distribution:
@@ -132,11 +127,16 @@ where we can relate the eigenfunctions of both operators via $\phi_i(\mathbf{x})
 \end{equation}
 These timescales $t_i$ are also referred to as the $i$th implied timescale.
 
+Combining the above (assuming reversibility) allows us to decompose the action of the transfer operator on an arbitrary distribution $u(\mathbf{x})$ into its eigenvalues and eigenfunctions:
+\begin{align}
+    u_{t + k\tau}(\mathbf{x}) &= \mathcal{T}(\tau)^k u_t(\mathbf{x}) = \sum_{i=1}^{\infty} \lambda_i^k \langle u_t, \phi_i \rangle \psi_i(\mathbf{x}) \\
+    &= \sum_{i=1}^{m} \lambda_i^k \langle u_t, \phi_i \rangle \psi_i(\mathbf{x}) \left[ + \mathcal{T}(\tau)^k_{\text{fast}} u_t(\mathbf{x}) \right] \label{eq:intro:transfer_decomp}
+\end{align}
+where $\langle u_t, \phi_i \rangle = \int_{\mathbf{x} \in \Omega} u_t(\mathbf{x}) \phi_i(\mathbf{x}) d\mathbf{x}$ is the scalar product in Dirac notation. Equation \ref{eq:intro:transfer_decomp} allows us to interpret the dynamics in a physically meaningful way. We split the decomposition into the $m$ dominant and the remaining fast processes since we are primarily interested in the slow processes of the system, which include folding or larger conformational changes. Thus, the slow dynamics can be viewed as a linear combination of the $m$ dominant eigenfunctions. With increasing simulation time (i.e., increasing $k$), the contributions of the eigenfunctions scales exponentially with their eigenvalues. For all eigenfunctions, except the stationary, this contribution will eventually decay to zero as $k \rightarrow \infty$, returning the distribution to the stationary distribution. Larger timescales $t_i$ correspond to eigenvalues $\lambda_i$ closer to 1, thus these processes decay more slowly and represent, e.g., a distribution of meta-stable states which must overcome large energy barriers to relax to equilibrium. Faster processes have smaller eigenvalues and thus decay quickly, allowing us to approximate the long-timescale dynamics using only the $m$ dominant eigenvalues and eigenfunctions.
 
+Thus, we are interested in how we can approximate these eigenvalues and eigenfunctions from MD data. For this, we will look at two approaches in the following sections: Time-lagged Independent Component Analysis (TICA) in Section \TODO{Ref} and Markov State Models (MSMs) in Section \TODO{Ref}.
 
-Thus, we are interested how we can approximate these eigenvalues and eigenfunctions from MD data. 
-
-% Then the last bit of formalism ...
+% TODO: Variational approach?
 
 \subsection{Aim and Scope}
 % - Aim of this work:
