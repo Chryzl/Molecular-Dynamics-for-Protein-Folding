@@ -186,9 +186,36 @@ which is equivalent to the variational eigenvalue problem defined in Equation \r
 
 However, solving Equation \ref{eq:intro:tica_evp} is not trivial because some coordinates are most likely highly correlated. Therefore, the covariance matrix $\mathbf{C}^x(0)$ may be ill-conditioned, making it difficult to solve the eigenvalue problem directly. \cite{perez2013identification} The problem is typically solved in two steps via the AMUSE algorithm \cite{Tong1990AMUSE}, which first whitens the data by applying PCA and then solves a standard eigenvalue problem on the whitened data \cite{perez2013identification}. Thus, TICA gives us a powerful tool to approximate the slow eigenfunctions of the transfer operator laying the foundation for further analysis techniques such as Markov State Models (Section \TODO{Ref}).
 
+% TODO Commute maps? From the Noe 2017 review
+
 \section{Markov State Models and Protein Folding Kinetics}
 % - Talk about what MSMs are, why people first started using them for protein folding (intuition), and then talk about the formalism in transfer operator language
-% chodera2014markov --> 2014 review paper on MSMs for biomolecular dynamics
+
+% chodera2014markov --> 2014 review paper on MSMs for biomolecular dynamics:
+% - Despite comp advancements --> Time scale is still limited, especially since we want a statistical picture (many rare transitions) to get kinetics
+% - MSMs allow to tackle that problem
+% - MSMs can (bacause of markovianity) stitch together short simulations --> longer timescales
+% - MSMs discretize the state space into states (by clustering the data) --> Need to balance between having many states (low discretization error) and few states (good statistics per state)
+% - MSMs model how likely a transition between states is over a lag time tau --> Transition matrix, akin to propagator
+% - From transition matrix --> get stationary distribution
+% - And transition matrix can be gotten from "cheap" short simulations --> Even then we can get the stationary distribution!!!
+% - Also MSMs do not need to define short order parameters beforehand, different to many enhanced sampling methods
+% - And again, we can link MSMs to the transfer operator formalism via the variational principle using class indicator functions as basis functions
+% - ==> Thus, like in QM, defining the basis set can improve the approximation
+
+% From perez2013identification:
+% - We get our states by running e.g. k-means clustering in TICA space
+% - Then assign each frame to a state --> get discrete trajectory
+
+% From noe2017collective:
+% - MSMs class function can also be a gaussian --> fuzzy clustering
+
+% From prinz2011markov:
+% - CVs are nice and all, but we are always losing information + we can only do so much with them --> MSMs allow more
+% - We get kinetics from MSMs via: rate theory or or based on the MD data directly
+% - Also, we can do statistical error estimations
+% - 
+
 
 % Potential Projects
 % file:///Users/christianmacbook/Downloads/978-3-540-38448-9.pdf --> Chapter 8 talks about some math for MD that needs to be assumed (pdf page 293)
