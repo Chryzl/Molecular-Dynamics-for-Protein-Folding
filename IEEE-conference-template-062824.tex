@@ -154,8 +154,8 @@ where $\hat{\psi}_i(\mathbf{x})$ is the approximation of $\psi_i(\mathbf{x})$ an
 \end{equation}
 where $\hat{\lambda}_i$ is the approximation of $i$th eigenvalue. The matrices $\mathbf{C}(\tau)$ and $\mathbf{C}(0)$ are the covariance matrices of the basis functions at lag-time $\tau$ and 0, respectively:
 \begin{align}
-    c_{ij}^{\chi}(\tau) &= \langle \chi_i(\mathbf{x}(t)) \cdot \chi_j(\mathbf{x}(t + \tau)) \rangle_{t} \\
-    c_{ij}^{\chi}(0) &= \langle \chi_i(\mathbf{x}(t)) \cdot \chi_j(\mathbf{x}(t)) \rangle_{t}
+    c_{ij}^{\chi}(\tau) &= \langle \chi_i(\mathbf{x}(t)) \cdot \chi_j(\mathbf{x}(t + \tau)) \rangle_{t} \label{eq:intro:cov_mat_tau} \\
+    c_{ij}^{\chi}(0) &= \langle \chi_i(\mathbf{x}(t)) \cdot \chi_j(\mathbf{x}(t)) \rangle_{t} \label{eq:intro:cov_mat_nill}
 \end{align}
 where $\langle \dots \rangle_{t}$ denotes the time average over the MD trajectory, not the scalar product. By solving Equation \ref{eq:intro:var_evp}, we can obtain the optimal coefficients $\mathbf{b}_i$ and the approximated eigenvalues $\hat{\lambda}_i$. We can therefore approximate the eigenfunctions of the transfer operator via Equation \ref{eq:intro:var_approx} as linear combinations of the basis functions. These basis functions $\chi_k(\mathbf{x}): \Omega \rightarrow \mathbb{R}$ can generally be chosen freely and can be non-linear functions of the state space, thus allowing flexibility despite a linear combination.
 
@@ -250,7 +250,18 @@ If we compare Equation \ref{eq:msm:trans_ij} to the definition of the general tr
 \end{equation}
 where $\mathbf{\pi} \in \mathbb{R}^n$ is the stationary distribution over the discrete states, compared to $\mu(\mathbf{x})$ in the continuous case. As a result, we can recognize that MSMs are indeed a special case of the variational approach for approximating the eigenvalue problem of the transfer operator (Section \TODO{Ref}) when choosing the class indicator functions defined in Equation \ref{eq:msm:class_func} as basis functions.
 
+% How to get them from data
+So far, we have only seen the general definition of the transition matrix (Equation \ref{eq:msm:trans_ij}). Practically, we must estimate the transition matrix from the discrete trajectory obtained from the MD data $\mathbf{x}(t)$ where $t$ is discretized by the simulation time-step $\delta t$. To do so, we first define the observed count matrix $\mathbf{N}^\text{obs}(l \cdot \delta t)$:
+\begin{equation}
+    \mathbf{N}^\text{obs}_{ij}(l \cdot \delta t) = \sum_{t=0}^{M - l} \chi_{i}(\mathbf{x}(t)) \cdot \chi_{j}(\mathbf{x}(t + l \cdot \delta t)) \label{eq:msm:count_ij}
+\end{equation}
+which counts the number of observed transitions from state $S_i$ to state $S_j$ over a lag-time of $l \cdot \delta t$ (see Equation \ref{eq:msm:class_func}). Here, $M$ is the total number of frames in the MD trajectory. Similarly, we define the total count $\mathbf{N}^\text{obs}_i(l \cdot \delta t)$ over a state $S_i$ as $\mathbf{N}^\text{obs}_{i}(l \cdot \delta t) = \sum_{j=1}^{n} \mathbf{N}^\text{obs}_{ij}(l \cdot \delta t) \label{eq:msm:total_count_i}$, which counts the total number of observed transitions originating from state $S_i$. Prinz et al. \cite{prinz2011markov} show that the intuitive definition of the transition matrix elements as the ratio of observed transitions from state $S_i$ to state $S_j$ over the total observed transitions from state $S_i$ is a maximum likelihood estimator that is unbiased when approaching infinite simulation length $M \rightarrow \infty$:
+\begin{equation}
+    \hat{\mathbf{T}}_{ij}(l \cdot \delta t) = \frac{\mathbf{N}^\text{obs}_{ij}(l \cdot \delta t)}{\mathbf{N}^\text{obs}_{i}(l \cdot \delta t)} \label{eq:msm:trans_est}
+\end{equation}
+However, Prinz et al. \cite{prinz2011markov} also find that $\hat{\mathbf{T}}$ does not necessarily fulfill detailed balance, even if the underlying dynamics are reversible. If this property is desired, there are various methods ensure reversibility in the estimated transition matrix \cite{prinz2011markov}.
 
+% How to validate an MSM (Chapman-Kolmogorov test + Implied Timescales)
 
 
 
