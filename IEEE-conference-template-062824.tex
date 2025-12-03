@@ -268,6 +268,11 @@ Another open question when constructing an MSM is how to choose a lag-time $\tau
 where $\epsilon_2$ is the discretization error of the second eigenfunction. Thus, by increasing the lag-time $\tau$ or by reducing the discretization error $\epsilon_2$ (e.g., by increasing the number of states), we can reduce the error in the estimated timescale. Therefore, a common approach to choose a suitable lag-time is to determine $\tau$ by analyzing the convergence of the implied timescales as a function of $\tau$.
 
 % How to validate an MSM (Chapman-Kolmogorov test + Implied Timescales)
+Finally, after constructing an MSM, we must validate it. Typically, this is done by performing a Chapman-Kolmogorov test, where we test if the MSM we constructed can at least reproduce the observed MD data itself, within statistical uncertainty. Specifically, we want to test the Chapman-Kolmogorov equation:
+\begin{equation}
+    \hat{\mathbf{T}}(k \tau) \stackrel{?}{\approx} \hat{\mathbf{T}}(\tau)^k
+\end{equation}
+There are various ways to perform this test in practice, and deriving the test and uncertainty quantification is out of scope for this report. However, the Chapman-Kolmogorov test is a crucial step in validating the MSM.
 
 % Potential Projects
 % file:///Users/christianmacbook/Downloads/978-3-540-38448-9.pdf --> Chapter 8 talks about some math for MD that needs to be assumed (pdf page 293)
