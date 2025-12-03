@@ -127,7 +127,7 @@ Thus, the stationary distribution $\mu(\mathbf{x})$ is an eigenfunction $\phi_1(
 \end{align}
 where we can relate the eigenfunctions of both operators via $\phi_i(\mathbf{x}) = \mu(\mathbf{x}) \psi_i(\mathbf{x})$, following from Equation \ref{eq:intro:prop_to_transfer}. Importantly, the eigenvalues $\lambda_i$ are the same for both operators. If we assume reversibility, the eigenvalues are real and can be bounded by $-1 < \lambda_i \leq 1$. Following convention, we can order the eigenvalues such that $\lambda_1 = 1 > \lambda_2 \geq \lambda_3 \geq ...$. However, we only consider the biggest $m$ eigenvalues and eigenfunctions termed dominant. From the Chapman-Kolmogorov equation, it follows that the eigenvalues must follow a relation to a physically interpretable timescale $t_i$ in the form of:
 \begin{equation}
-    \lambda_i = e^{-\tau t_i^{-1}} \quad \Leftrightarrow \quad t_i = -\frac{\tau}{\ln \lambda_i}
+    \lambda_i = e^{-\tau t_i^{-1}} \quad \Leftrightarrow \quad t_i = -\frac{\tau}{\ln \lambda_i} \label{eq:intro:timescale}
 \end{equation}
 These timescales $t_i$ are also referred to as the $i$th implied timescale.
 
@@ -261,18 +261,13 @@ which counts the number of observed transitions from state $S_i$ to state $S_j$ 
 \end{equation}
 However, Prinz et al. \cite{prinz2011markov} also find that $\hat{\mathbf{T}}$ does not necessarily fulfill detailed balance, even if the underlying dynamics are reversible. If this property is desired, there are various methods ensure reversibility in the estimated transition matrix \cite{prinz2011markov}.
 
+Another open question when constructing an MSM is how to choose a lag-time $\tau$. One useful heuristic can be derived from the largest implied timescales $\hat{t}_2(\tau)$, which is computed from the eigenvalues $\hat{\lambda}_2(\tau)$ (Equation \ref{eq:intro:timescale}) of the estimated transition matrix $\hat{\mathbf{T}}(\tau)$. Specifically, it can be shown that the residual between the true timescale $t_2$ and the estimate can be bounded from above:
+\begin{equation}
+    \hat{t}_2^{-1} - t_2^{-1} \leq - \tau^{-1} \ln \left(1 - \epsilon_2^2\right)
+\end{equation}
+where $\epsilon_2$ is the discretization error of the second eigenfunction. Thus, by increasing the lag-time $\tau$ or by reducing the discretization error $\epsilon_2$ (e.g., by increasing the number of states), we can reduce the error in the estimated timescale. Therefore, a common approach to choose a suitable lag-time is to determine $\tau$ by analyzing the convergence of the implied timescales as a function of $\tau$.
+
 % How to validate an MSM (Chapman-Kolmogorov test + Implied Timescales)
-
-
-
-
-% --- Subsection: MSMs as a Variational Approximation ---
-% Goal: Connect MSMs back to the Transfer Operator theory established earlier.
-% - Link back to Transfer Operator: MSMs are not just heuristic; they fit the variational framework.
-% - Basis Functions: Instead of linear functions (TICA), MSMs use characteristic (indicator) functions on the discretized states.
-% - [Existing] And again, we can link MSMs to the transfer operator formalism via the variational principle using class indicator functions as basis functions (Chodera 2014)
-% - [Existing] ==> Thus, like in QM, defining the basis set can improve the approximation
-% - [Existing] MSMs class function can also be a gaussian --> fuzzy clustering (Noe 2017)
 
 % Potential Projects
 % file:///Users/christianmacbook/Downloads/978-3-540-38448-9.pdf --> Chapter 8 talks about some math for MD that needs to be assumed (pdf page 293)
