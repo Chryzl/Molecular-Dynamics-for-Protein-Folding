@@ -1,0 +1,16 @@
+name: transferDL
+channels:
+  - pytorch
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pytorch=2.0
+  - torchvision
+  - numpy<2
+  - scipy
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - tqdm
+  - pyyaml
+  - tensorboard
