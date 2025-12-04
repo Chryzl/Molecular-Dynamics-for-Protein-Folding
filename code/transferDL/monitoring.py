@@ -34,9 +34,15 @@ class TrainingMonitor:
 
         # Initialize metric storage (for JSON export and plotting)
         self.metrics = {
-            "phase1": {"epoch": [], "loss": [], "accuracy": [], "lr": []},
-            "phase2": {"step": [], "loss": [], "accuracy": []},
-            "phase3": {"step": [], "loss": [], "accuracy": []},
+            "phase1": {
+                "epoch": [],
+                "loss": [],
+                "accuracy": [],
+                "lr": [],
+                "grad_norm": [],
+            },
+            "phase2": {"step": [], "loss": [], "accuracy": [], "grad_norm": []},
+            "phase3": {"step": [], "loss": [], "accuracy": [], "grad_norm": []},
         }
 
         # Diagnostic storage for SGLD validation
@@ -48,17 +54,28 @@ class TrainingMonitor:
         # Trajectory storage for PCA visualization
         self.trajectory_params = []  # Store theta vectors for Phase 3
 
-    def log_phase1(self, epoch: int, loss: float, accuracy: float, lr: float):
+    def log_phase1(
+        self,
+        epoch: int,
+        loss: float,
+        accuracy: float,
+        lr: float,
+        grad_norm: float = None,
+    ):
         """Record training metrics during minimization phase."""
         self.metrics["phase1"]["epoch"].append(epoch)
         self.metrics["phase1"]["loss"].append(loss)
         self.metrics["phase1"]["accuracy"].append(accuracy)
         self.metrics["phase1"]["lr"].append(lr)
+        if grad_norm is not None:
+            self.metrics["phase1"]["grad_norm"].append(grad_norm)
 
         # TensorBoard logging
         self.writer.add_scalar("Phase1/Loss", loss, epoch)
         self.writer.add_scalar("Phase1/Accuracy", accuracy, epoch)
         self.writer.add_scalar("Phase1/LearningRate", lr, epoch)
+        if grad_norm is not None:
+            self.writer.add_scalar("Phase1/GradientNorm", grad_norm, epoch)
 
     def check_phase1_termination(self, accuracy: float) -> bool:
         """
@@ -72,27 +89,42 @@ class TrainingMonitor:
         """
         return accuracy >= self.config.phase1_target_accuracy
 
-    def log_phase2(self, step: int, loss: float, accuracy: float):
+    def log_phase2(
+        self, step: int, loss: float, accuracy: float, grad_norm: float = None
+    ):
         """Monitor equilibration (expect stabilization)."""
         self.metrics["phase2"]["step"].append(step)
         self.metrics["phase2"]["loss"].append(loss)
         self.metrics["phase2"]["accuracy"].append(accuracy)
+        if grad_norm is not None:
+            self.metrics["phase2"]["grad_norm"].append(grad_norm)
 
         # TensorBoard logging
         self.writer.add_scalar("Phase2/Loss", loss, step)
         self.writer.add_scalar("Phase2/Accuracy", accuracy, step)
+        if grad_norm is not None:
+            self.writer.add_scalar("Phase2/GradientNorm", grad_norm, step)
 
     def log_phase3(
-        self, step: int, loss: float, accuracy: float, theta: np.ndarray = None
+        self,
+        step: int,
+        loss: float,
+        accuracy: float,
+        theta: np.ndarray = None,
+        grad_norm: float = None,
     ):
         """Record production run data and visualize trajectory."""
         self.metrics["phase3"]["step"].append(step)
         self.metrics["phase3"]["loss"].append(loss)
         self.metrics["phase3"]["accuracy"].append(accuracy)
+        if grad_norm is not None:
+            self.metrics["phase3"]["grad_norm"].append(grad_norm)
 
         # TensorBoard logging
         self.writer.add_scalar("Phase3/Loss", loss, step)
         self.writer.add_scalar("Phase3/Accuracy", accuracy, step)
+        if grad_norm is not None:
+            self.writer.add_scalar("Phase3/GradientNorm", grad_norm, step)
 
         # Store trajectory parameters for PCA visualization
         if theta is not None:
@@ -166,22 +198,33 @@ class TrainingMonitor:
             ax.grid(True)
 
             ax = axes[0, 1]
-            ax.plot(
-                self.metrics["phase1"]["epoch"],
-                self.metrics["phase1"]["accuracy"],
-                "g-",
-                linewidth=2,
-            )
-            ax.axhline(
-                y=self.config.phase1_target_accuracy,
-                color="r",
-                linestyle="--",
-                label="Target",
-            )
-            ax.set_xlabel("Epoch")
-            ax.set_ylabel("Accuracy")
-            ax.set_title("Phase 1: Minimization - Accuracy")
-            ax.legend()
+            if self.metrics["phase1"]["grad_norm"]:
+                ax.plot(
+                    self.metrics["phase1"]["epoch"],
+                    self.metrics["phase1"]["grad_norm"],
+                    "m-",
+                    linewidth=2,
+                )
+                ax.set_xlabel("Epoch")
+                ax.set_ylabel("Gradient Norm")
+                ax.set_title("Phase 1: Minimization - Gradient Norm")
+            else:
+                ax.plot(
+                    self.metrics["phase1"]["epoch"],
+                    self.metrics["phase1"]["accuracy"],
+                    "g-",
+                    linewidth=2,
+                )
+                ax.axhline(
+                    y=self.config.phase1_target_accuracy,
+                    color="r",
+                    linestyle="--",
+                    label="Target",
+                )
+                ax.set_xlabel("Epoch")
+                ax.set_ylabel("Accuracy")
+                ax.set_title("Phase 1: Minimization - Accuracy")
+                ax.legend()
             ax.grid(True)
 
         # Phase 2: Equilibration
@@ -199,15 +242,26 @@ class TrainingMonitor:
             ax.grid(True)
 
             ax = axes[1, 1]
-            ax.plot(
-                self.metrics["phase2"]["step"],
-                self.metrics["phase2"]["accuracy"],
-                "g-",
-                linewidth=2,
-            )
-            ax.set_xlabel("Step")
-            ax.set_ylabel("Accuracy")
-            ax.set_title("Phase 2: Equilibration - Accuracy")
+            if self.metrics["phase2"]["grad_norm"]:
+                ax.plot(
+                    self.metrics["phase2"]["step"],
+                    self.metrics["phase2"]["grad_norm"],
+                    "m-",
+                    linewidth=2,
+                )
+                ax.set_xlabel("Step")
+                ax.set_ylabel("Gradient Norm")
+                ax.set_title("Phase 2: Equilibration - Gradient Norm")
+            else:
+                ax.plot(
+                    self.metrics["phase2"]["step"],
+                    self.metrics["phase2"]["accuracy"],
+                    "g-",
+                    linewidth=2,
+                )
+                ax.set_xlabel("Step")
+                ax.set_ylabel("Accuracy")
+                ax.set_title("Phase 2: Equilibration - Accuracy")
             ax.grid(True)
 
         # Phase 3: Production
@@ -227,16 +281,28 @@ class TrainingMonitor:
             ax.grid(True)
 
             ax = axes[2, 1]
-            steps = np.array(self.metrics["phase3"]["step"])
-            accs = np.array(self.metrics["phase3"]["accuracy"])
-            if len(steps) > 1000:
-                indices = np.linspace(0, len(steps) - 1, 1000, dtype=int)
-                steps = steps[indices]
-                accs = accs[indices]
-            ax.plot(steps, accs, "g-", alpha=0.6, linewidth=1)
-            ax.set_xlabel("Step")
-            ax.set_ylabel("Accuracy")
-            ax.set_title("Phase 3: Production - Accuracy")
+            if self.metrics["phase3"]["grad_norm"]:
+                steps = np.array(self.metrics["phase3"]["step"])
+                grads = np.array(self.metrics["phase3"]["grad_norm"])
+                if len(steps) > 1000:
+                    indices = np.linspace(0, len(steps) - 1, 1000, dtype=int)
+                    steps = steps[indices]
+                    grads = grads[indices]
+                ax.plot(steps, grads, "m-", alpha=0.6, linewidth=1)
+                ax.set_xlabel("Step")
+                ax.set_ylabel("Gradient Norm")
+                ax.set_title("Phase 3: Production - Gradient Norm")
+            else:
+                steps = np.array(self.metrics["phase3"]["step"])
+                accs = np.array(self.metrics["phase3"]["accuracy"])
+                if len(steps) > 1000:
+                    indices = np.linspace(0, len(steps) - 1, 1000, dtype=int)
+                    steps = steps[indices]
+                    accs = accs[indices]
+                ax.plot(steps, accs, "g-", alpha=0.6, linewidth=1)
+                ax.set_xlabel("Step")
+                ax.set_ylabel("Accuracy")
+                ax.set_title("Phase 3: Production - Accuracy")
             ax.grid(True)
 
         plt.tight_layout()

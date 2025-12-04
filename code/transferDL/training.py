@@ -58,17 +58,16 @@ class ThreePhaseTrainer:
 
     def evaluate(self, data_loader: DataLoader) -> tuple:
         """
-        Evaluate model on validation set.
+        Compute validation loss and accuracy.
 
         Args:
             data_loader: Validation dataloader
 
         Returns:
-            avg_loss: Average loss over dataset
-            accuracy: Classification accuracy
+            (val_loss, val_accuracy): Metrics on validation set
         """
         self.model.eval()
-        total_loss = 0.0
+        val_loss = 0.0
         correct = 0
         total = 0
 
@@ -78,15 +77,28 @@ class ThreePhaseTrainer:
                 outputs = self.model(inputs)
                 loss = self.criterion(outputs, targets)
 
-                total_loss += loss.item() * inputs.size(0)
-                _, predicted = outputs.max(1)
-                correct += predicted.eq(targets).sum().item()
-                total += inputs.size(0)
+                val_loss += loss.item()
+                _, predicted = torch.max(outputs, 1)
+                correct += (predicted == targets).sum().item()
+                total += targets.size(0)
 
-        avg_loss = total_loss / total
-        accuracy = correct / total
+        val_loss /= len(data_loader)
+        val_accuracy = correct / total if total > 0 else 0.0
 
-        return avg_loss, accuracy
+        return val_loss, val_accuracy
+
+    def compute_gradient_norm(self) -> float:
+        """
+        Compute the L2 norm of all gradients in the model.
+
+        Returns:
+            grad_norm: L2 norm of all gradients
+        """
+        total_norm = 0.0
+        for p in self.model.parameters():
+            if p.grad is not None:
+                total_norm += p.grad.data.norm(2).item() ** 2
+        return (total_norm) ** 0.5
 
     def phase1_minimization(
         self, train_loader: DataLoader, val_loader: DataLoader
@@ -114,6 +126,7 @@ class ThreePhaseTrainer:
         for epoch in range(self.config.phase1_epochs):
             self.model.train()
             train_loss = 0.0
+            grad_norm = 0.0
 
             for inputs, targets in tqdm(train_loader, desc=f"Epoch {epoch+1}"):
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
@@ -122,6 +135,7 @@ class ThreePhaseTrainer:
                 outputs = self.model(inputs)
                 loss = self.criterion(outputs, targets)
                 loss.backward()
+                grad_norm = self.compute_gradient_norm()  # Compute on last batch
                 optimizer.step()
 
                 train_loss += loss.item()
@@ -131,7 +145,9 @@ class ThreePhaseTrainer:
             current_lr = scheduler.get_last_lr()[0]
 
             # Log metrics
-            self.monitor.log_phase1(epoch, val_loss, val_accuracy, current_lr)
+            self.monitor.log_phase1(
+                epoch, val_loss, val_accuracy, current_lr, grad_norm
+            )
 
             print(
                 f"Epoch {epoch+1}/{self.config.phase1_epochs} - "
@@ -205,7 +221,8 @@ class ThreePhaseTrainer:
                 # Periodic evaluation
                 if step % self.config.eval_interval == 0:
                     val_loss, val_accuracy = self.evaluate(val_loader)
-                    self.monitor.log_phase2(step, val_loss, val_accuracy)
+                    grad_norm = self.compute_gradient_norm()
+                    self.monitor.log_phase2(step, val_loss, val_accuracy, grad_norm)
                     self.model.train()
 
                     pbar.set_postfix(
@@ -285,6 +302,7 @@ class ThreePhaseTrainer:
                 # Save trajectory snapshot (use float16 to save memory)
                 if step % self.config.save_interval == 0:
                     val_loss, val_accuracy = self.evaluate(val_loader)
+                    grad_norm = self.compute_gradient_norm()
                     theta_t = self.model.get_flat_params_fp16()  # float16 for memory
 
                     self.trajectory.append(
@@ -296,7 +314,9 @@ class ThreePhaseTrainer:
                         }
                     )
 
-                    self.monitor.log_phase3(step, val_loss, val_accuracy, theta=theta_t)
+                    self.monitor.log_phase3(
+                        step, val_loss, val_accuracy, theta=theta_t, grad_norm=grad_norm
+                    )
                     self.model.train()
 
                     pbar.set_postfix(

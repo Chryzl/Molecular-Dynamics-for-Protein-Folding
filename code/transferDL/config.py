@@ -10,7 +10,7 @@ class Config:
 
     # Architecture
     input_dim: int = 784
-    hidden_dim: int = 64
+    hidden_dim: int = 32
     output_dim: int = 10
 
     # Phase 1: Minimization (SGD)
@@ -21,12 +21,12 @@ class Config:
 
     # Phase 2: Equilibration (SGLD)
     phase2_steps: int = 80_000
-    sgld_lr: float = 1e-4  # 1e-4 and 5e-4 too low --> not enough exploration
+    sgld_lr: float = 5e-4  # 1e-4 and 5e-4 too low --> not enough exploration
     sgld_noise_scale: float = 1e-1  # σ in method section # 1e-3 too low
 
     # Phase 3: Production (SGLD)
-    phase3_steps: int = 500_000
-    save_interval: int = 100  # τ_save
+    phase3_steps: int = 2_000_000
+    save_interval: int = 1000  # τ_save
 
     # Validation
     num_replicas: int = 3

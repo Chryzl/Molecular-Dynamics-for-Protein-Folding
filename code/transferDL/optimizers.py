@@ -55,7 +55,9 @@ class SGLD(Optimizer):
 
                 # Gradient descent step
                 d_p = p.grad
-                p.add_(d_p, alpha=-lr)
+                p.add_(
+                    d_p, alpha=-lr
+                )  # TODO, fully random to see if implementation is correct --> We get path in PCA despite fully random???
 
                 # Langevin noise injection: sqrt(2ε) * σ * N(0, I)
                 noise_std = math.sqrt(2 * lr) * noise_scale
