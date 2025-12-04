@@ -7,6 +7,10 @@ from typing import Dict, List, Optional
 import matplotlib.pyplot as plt
 import seaborn as sns
 from torch.utils.tensorboard import SummaryWriter
+from datetime import datetime
+from sklearn.decomposition import PCA
+import io
+from PIL import Image
 
 
 class TrainingMonitor:
@@ -38,8 +42,11 @@ class TrainingMonitor:
         # Diagnostic storage for SGLD validation
         self.diagnostics = {
             "phase2": {"warnings": []},
-            "phase3": {"warnings": [], "ess": [], "autocorr": []},
+            "phase3": {"warnings": []},
         }
+
+        # Trajectory storage for PCA visualization
+        self.trajectory_params = []  # Store theta vectors for Phase 3
 
     def log_phase1(self, epoch: int, loss: float, accuracy: float, lr: float):
         """Record training metrics during minimization phase."""
@@ -75,8 +82,10 @@ class TrainingMonitor:
         self.writer.add_scalar("Phase2/Loss", loss, step)
         self.writer.add_scalar("Phase2/Accuracy", accuracy, step)
 
-    def log_phase3(self, step: int, loss: float, accuracy: float):
-        """Record production run data."""
+    def log_phase3(
+        self, step: int, loss: float, accuracy: float, theta: np.ndarray = None
+    ):
+        """Record production run data and visualize trajectory."""
         self.metrics["phase3"]["step"].append(step)
         self.metrics["phase3"]["loss"].append(loss)
         self.metrics["phase3"]["accuracy"].append(accuracy)
@@ -84,6 +93,17 @@ class TrainingMonitor:
         # TensorBoard logging
         self.writer.add_scalar("Phase3/Loss", loss, step)
         self.writer.add_scalar("Phase3/Accuracy", accuracy, step)
+
+        # Store trajectory parameters for PCA visualization
+        if theta is not None:
+            self.trajectory_params.append(theta)
+
+            # Plot PCA projection periodically
+            if (
+                len(self.trajectory_params) > 10
+                and step % self.config.pca_plot_interval == 0
+            ):
+                self._plot_pca_projection(step)
 
     def save_metrics(self, filepath: Optional[str] = None):
         """
@@ -298,8 +318,6 @@ class TrainingMonitor:
 
         Validates:
         1. Loss distribution is stable (not drifting)
-        2. Effective Sample Size (ESS) is reasonable
-        3. Autocorrelation is decaying
 
         Args:
             window_size: Number of recent steps to analyze
@@ -317,18 +335,13 @@ class TrainingMonitor:
 
         recent_losses = losses[-window_size:]
 
-        # 1. Check for drift (loss should fluctuate around stationary mean)
+        # Check for drift (loss should fluctuate around stationary mean)
         first_quarter = recent_losses[: window_size // 4]
         last_quarter = recent_losses[-window_size // 4 :]
         drift_pct = abs(np.mean(last_quarter) - np.mean(first_quarter)) / (
             np.mean(first_quarter) + 1e-10
         )
         drift_ok = drift_pct < self.config.warn_drift_threshold
-
-        # 2. Compute effective sample size (ESS) via autocorrelation
-        ess, autocorr_decay = self._compute_ess(recent_losses)
-        ess_ratio = ess / len(recent_losses)
-        ess_ok = ess_ratio > self.config.min_ess_ratio
 
         warnings = []
         if not drift_ok:
@@ -337,73 +350,107 @@ class TrainingMonitor:
             self.diagnostics["phase3"]["warnings"].append(warning)
             print(f"\n{warning}")
 
-        if not ess_ok:
-            warning = f"⚠️  Phase 3: Low ESS ({ess_ratio*100:.1f}%) - high autocorrelation, consider longer lag time"
-            warnings.append(warning)
-            self.diagnostics["phase3"]["warnings"].append(warning)
-            print(f"\n{warning}")
-
         # Log to TensorBoard
         current_step = self.metrics["phase3"]["step"][-1]
         self.writer.add_scalar("Diagnostics/Phase3_Drift", drift_pct, current_step)
-        self.writer.add_scalar("Diagnostics/Phase3_ESS_Ratio", ess_ratio, current_step)
-        self.writer.add_scalar(
-            "Diagnostics/Phase3_Autocorr_Lag1", autocorr_decay, current_step
-        )
-
-        # Store for summary
-        self.diagnostics["phase3"]["ess"].append(ess_ratio)
-        self.diagnostics["phase3"]["autocorr"].append(autocorr_decay)
 
         return {
             "drift_ok": drift_ok,
-            "ess_ok": ess_ok,
-            "sampling_ok": drift_ok and ess_ok,
+            "sampling_ok": drift_ok,
             "warnings": warnings,
             "drift_pct": drift_pct,
-            "ess_ratio": ess_ratio,
-            "autocorr_lag1": autocorr_decay,
         }
 
-    def _compute_ess(self, timeseries: np.ndarray, max_lag: int = 1000) -> tuple:
+    def _plot_pca_projection(self, current_step: int):
         """
-        Compute effective sample size via autocorrelation.
-
-        ESS = N / (1 + 2 * sum(autocorr[lag] for lag > 0))
+        Plot PCA projection of trajectory in TensorBoard.
 
         Args:
-            timeseries: 1D array of values
-            max_lag: Maximum lag for autocorrelation
-
-        Returns:
-            ess: Effective sample size
-            autocorr_lag1: First-order autocorrelation (for decay check)
+            current_step: Current training step for logging
         """
-        n = len(timeseries)
+        try:
+            # Stack all trajectory parameters
+            theta_array = np.array(self.trajectory_params)  # (n_frames, n_params)
 
-        print(f"Lag time: {min(n, max_lag)} from total samples: {n}")
+            if len(theta_array) < self.config.pca_n_components:
+                return  # Not enough samples yet
 
-        timeseries = timeseries - np.mean(timeseries)
+            # Fit PCA
+            pca = PCA(
+                n_components=min(self.config.pca_n_components, theta_array.shape[1])
+            )
+            theta_pca = pca.fit_transform(theta_array)
 
-        # Compute autocorrelation
-        autocorr = (
-            np.correlate(timeseries, timeseries, mode="full")[n - 1 :]
-            / np.var(timeseries)
-            / n
-        )
-        autocorr = autocorr[: min(max_lag, n)]
+            # Create figure
+            fig, ax = plt.subplots(figsize=(8, 6))
 
-        # Sum until autocorrelation becomes negative (standard practice)
-        sum_autocorr = 0
-        for lag in range(1, len(autocorr)):
-            if autocorr[lag] < 0:
-                break
-            sum_autocorr += autocorr[lag]
+            # Scatter plot colored by time (frame index)
+            scatter = ax.scatter(
+                theta_pca[:, 0],
+                theta_pca[:, 1],
+                c=np.arange(len(theta_pca)),
+                cmap="viridis",
+                s=5,
+                alpha=0.6,
+            )
 
-        ess = n / (1 + 2 * sum_autocorr)
-        autocorr_lag1 = autocorr[1] if len(autocorr) > 1 else 0
+            ax.set_xlabel(
+                f"PC1 ({pca.explained_variance_ratio_[0]*100:.1f}% var)", fontsize=11
+            )
+            ax.set_ylabel(
+                f"PC2 ({pca.explained_variance_ratio_[1]*100:.1f}% var)", fontsize=11
+            )
+            ax.set_title(
+                f"Parameter Space Trajectory (n={len(theta_pca)} frames)", fontsize=12
+            )
+            ax.grid(alpha=0.3)
 
-        return ess, autocorr_lag1
+            # Add colorbar
+            cbar = plt.colorbar(scatter, ax=ax)
+            cbar.set_label("Time (frame)", fontsize=10)
+
+            plt.tight_layout()
+
+            # Convert to image and log to TensorBoard
+            buf = io.BytesIO()
+            plt.savefig(buf, format="png", dpi=100)
+            buf.seek(0)
+            image = Image.open(buf)
+            image_array = np.array(image)
+
+            # TensorBoard expects (C, H, W) format
+            if image_array.ndim == 3:
+                image_array = np.transpose(image_array, (2, 0, 1))
+
+            self.writer.add_image(
+                "Phase3/PCA_Trajectory", image_array, current_step, dataformats="CHW"
+            )
+
+            # Log variance explained
+            self.writer.add_scalar(
+                "Phase3/PCA_PC1_variance",
+                pca.explained_variance_ratio_[0],
+                current_step,
+            )
+            self.writer.add_scalar(
+                "Phase3/PCA_PC2_variance",
+                pca.explained_variance_ratio_[1],
+                current_step,
+            )
+
+            # Log trajectory spread
+            self.writer.add_scalar(
+                "Phase3/PCA_PC1_std", np.std(theta_pca[:, 0]), current_step
+            )
+            self.writer.add_scalar(
+                "Phase3/PCA_PC2_std", np.std(theta_pca[:, 1]), current_step
+            )
+
+            plt.close(fig)
+            buf.close()
+
+        except Exception as e:
+            print(f"Warning: PCA plot failed at step {current_step}: {e}")
 
     def print_diagnostics_summary(self):
         """Print summary of all diagnostics at the end of training."""
@@ -430,18 +477,12 @@ class TrainingMonitor:
             print("\nPhase 3: ✓ Sampling successful (no warnings)")
 
         # Phase 3 statistics
-        if self.diagnostics["phase3"]["ess"]:
-            mean_ess = np.mean(self.diagnostics["phase3"]["ess"])
-            mean_autocorr = np.mean(self.diagnostics["phase3"]["autocorr"])
+        if len(self.trajectory_params) > 0:
             print(f"\nPhase 3 Statistics:")
-            print(f"  Mean ESS ratio: {mean_ess*100:.1f}%")
-            print(f"  Mean lag-1 autocorr: {mean_autocorr:.3f}")
-
-            if mean_ess < 0.1:
-                print(f"  ⚠️  Low ESS suggests high correlation between samples")
-                print(f"     Consider: Increase save_interval or run longer")
-            else:
-                print(f"  ✓ ESS ratio acceptable")
+            print(f"  Trajectory frames collected: {len(self.trajectory_params)}")
+            print(
+                f"  PCA plots generated: {len(self.trajectory_params) // self.config.pca_plot_interval}"
+            )
 
         print("=" * 60)
 

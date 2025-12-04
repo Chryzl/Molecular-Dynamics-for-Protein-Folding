@@ -2,6 +2,11 @@
 *.pdf
 build/*
 
+*/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
@@ -303,3 +308,10 @@ TSWLatexianTemp*
 # option is specified. Footnotes are the stored in a file with suffix Notes.bib.
 # Uncomment the next line to have this generated file ignored.
 #*Notes.bib
+
+# Python cache directories without underscores (some tools create `pycache`)
+pycache/
+*/pycache/
+code/data/*
+data/*
+results/*

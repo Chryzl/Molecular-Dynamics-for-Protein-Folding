@@ -79,15 +79,22 @@ def save_trajectory(trajectory_list: List[Dict], filepath: str):
 
     # Convert list of dicts to dict of arrays
     steps = np.array([t["step"] for t in trajectory_list])
-    theta = np.array([t["theta"] for t in trajectory_list])
+    theta = np.array(
+        [t["theta"] for t in trajectory_list], dtype=np.float16
+    )  # Ensure float16
     losses = np.array([t["loss"] for t in trajectory_list])
     accuracies = np.array([t["accuracy"] for t in trajectory_list])
+
+    # Calculate memory savings
+    mem_mb = theta.nbytes / (1024 * 1024)
 
     np.savez_compressed(
         filepath, steps=steps, theta=theta, loss=losses, accuracy=accuracies
     )
 
-    print(f"Trajectory saved to {filepath} ({len(trajectory_list)} frames)")
+    print(
+        f"Trajectory saved to {filepath} ({len(trajectory_list)} frames, {mem_mb:.1f} MB theta)"
+    )
 
 
 def load_trajectory(filepath: str) -> Dict[str, np.ndarray]:

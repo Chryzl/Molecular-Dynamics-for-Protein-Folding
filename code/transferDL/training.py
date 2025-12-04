@@ -282,10 +282,10 @@ class ThreePhaseTrainer:
                 step += 1
                 pbar.update(1)
 
-                # Save trajectory snapshot
+                # Save trajectory snapshot (use float16 to save memory)
                 if step % self.config.save_interval == 0:
                     val_loss, val_accuracy = self.evaluate(val_loader)
-                    theta_t = self.model.get_flat_params()
+                    theta_t = self.model.get_flat_params_fp16()  # float16 for memory
 
                     self.trajectory.append(
                         {
@@ -296,7 +296,7 @@ class ThreePhaseTrainer:
                         }
                     )
 
-                    self.monitor.log_phase3(step, val_loss, val_accuracy)
+                    self.monitor.log_phase3(step, val_loss, val_accuracy, theta=theta_t)
                     self.model.train()
 
                     pbar.set_postfix(

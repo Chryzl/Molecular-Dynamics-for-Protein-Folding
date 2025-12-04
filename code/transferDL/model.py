@@ -42,6 +42,18 @@ class MLP(nn.Module):
             params.append(param.data.cpu().numpy().flatten())
         return np.concatenate(params)
 
+    def get_flat_params_fp16(self) -> np.ndarray:
+        """
+        Return θ as 1D numpy array in float16 for memory-efficient storage.
+
+        Returns:
+            theta: All parameters concatenated into single vector (float16)
+        """
+        params = []
+        for param in self.parameters():
+            params.append(param.data.cpu().numpy().astype(np.float16).flatten())
+        return np.concatenate(params)
+
     def set_flat_params(self, theta: np.ndarray):
         """
         Restore θ from 1D vector.
