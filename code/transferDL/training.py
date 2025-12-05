@@ -300,7 +300,7 @@ class ThreePhaseTrainer:
                 if step % self.config.save_interval == 0:
                     val_loss, val_accuracy = self.evaluate(val_loader)
                     grad_norm = self.compute_gradient_norm()
-                    theta_t = self.model.get_flat_params_fp16()  # float16 for memory
+                    theta_t = self.model.get_flat_params_fp16()
 
                     self.trajectory.append(
                         {
@@ -323,15 +323,6 @@ class ThreePhaseTrainer:
                             "frames": len(self.trajectory),
                         }
                     )
-
-                # Run production diagnostics
-                if (
-                    step % self.config.diagnostics_interval == 0
-                    and step >= self.config.diagnostics_window
-                ):
-                    diagnostics = self.monitor.check_phase3_sampling()
-                    if not diagnostics["sampling_ok"]:
-                        pbar.write(f"Step {step}: Sampling issues detected (see above)")
 
         print(f"Phase 3 complete: {len(self.trajectory)} frames collected")
         return self.trajectory

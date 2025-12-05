@@ -378,55 +378,6 @@ class TrainingMonitor:
             "var_ratio": var_ratio,
         }
 
-    def check_phase3_sampling(self, window_size: int = None) -> Dict[str, bool]:
-        """
-        Check if Phase 3 is sampling properly from stationary distribution.
-
-        Validates:
-        1. Loss distribution is stable (not drifting)
-
-        Args:
-            window_size: Number of recent steps to analyze
-
-        Returns:
-            diagnostics: Dict with validation results and warnings
-        """
-        if window_size is None:
-            window_size = self.config.diagnostics_window
-
-        losses = np.array(self.metrics["phase3"]["loss"])
-
-        if len(losses) < window_size:
-            return {"sampling_ok": True, "warnings": []}
-
-        recent_losses = losses[-window_size:]
-
-        # Check for drift (loss should fluctuate around stationary mean)
-        first_quarter = recent_losses[: window_size // 4]
-        last_quarter = recent_losses[-window_size // 4 :]
-        drift_pct = abs(np.mean(last_quarter) - np.mean(first_quarter)) / (
-            np.mean(first_quarter) + 1e-10
-        )
-        drift_ok = drift_pct < self.config.warn_drift_threshold
-
-        warnings = []
-        if not drift_ok:
-            warning = f"⚠️  Phase 3: Loss drift detected ({drift_pct*100:.2f}% change) - may not be sampling from stationary distribution"
-            warnings.append(warning)
-            self.diagnostics["phase3"]["warnings"].append(warning)
-            print(f"\n{warning}")
-
-        # Log to TensorBoard
-        current_step = self.metrics["phase3"]["step"][-1]
-        self.writer.add_scalar("Diagnostics/Phase3_Drift", drift_pct, current_step)
-
-        return {
-            "drift_ok": drift_ok,
-            "sampling_ok": drift_ok,
-            "warnings": warnings,
-            "drift_pct": drift_pct,
-        }
-
     def _plot_pca_projection(self, current_step: int):
         """
         Plot PCA projection of trajectory in TensorBoard.

@@ -29,8 +29,7 @@ class Config:
     save_interval: int = 1000  # τ_save
 
     # Validation
-    num_replicas: int = 3
-    ck_test_lags: List[int] = None  # Will be set in __post_init__
+    num_replicas: int = 1
 
     # Monitoring
     eval_interval: int = 500  # Check metrics every N steps
@@ -49,8 +48,3 @@ class Config:
     # Paths
     data_dir: str = "./data"
     results_dir: str = "./results"
-
-    def __post_init__(self):
-        """Set default values for mutable fields."""
-        if self.ck_test_lags is None:
-            self.ck_test_lags = [1, 2, 5, 10]
