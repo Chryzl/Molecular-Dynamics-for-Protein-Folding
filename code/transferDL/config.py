@@ -20,9 +20,9 @@ class Config:
     phase1_target_accuracy: float = 0.95
 
     # Phase 2: Equilibration (SGLD)
-    phase2_steps: int = 80_000
+    phase2_steps: int = 10_000
     sgld_lr: float = 5e-4  # 1e-4 and 5e-4 too low --> not enough exploration
-    sgld_noise_scale: float = 1e-1  # σ in method section # 1e-3 too low
+    sgld_noise_scale: float = 1e-2  # σ in method section # 1e-3 too low
 
     # Phase 3: Production (SGLD)
     phase3_steps: int = 2_000_000
@@ -43,7 +43,7 @@ class Config:
     warn_variance_ratio: float = 3.0  # Warn if variance changes > 3x
 
     # PCA Trajectory Visualization
-    pca_plot_interval: int = 1000  # Plot PCA projection every N steps
+    pca_plot_interval: int = 10000  # Plot PCA projection every N steps
     pca_n_components: int = 2  # Number of PCA components to compute
 
     # Paths

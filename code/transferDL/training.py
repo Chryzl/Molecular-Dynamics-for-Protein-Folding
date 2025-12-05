@@ -276,9 +276,6 @@ class ThreePhaseTrainer:
         step = 0
         data_iter = iter(train_loader)
 
-        # Buffer for periodic flushing
-        flush_frequency = 10000  # Save to disk every 10K frames
-
         with tqdm(total=self.config.phase3_steps, desc="Production") as pbar:
             while step < self.config.phase3_steps:
                 # Get batch
@@ -326,14 +323,6 @@ class ThreePhaseTrainer:
                             "frames": len(self.trajectory),
                         }
                     )
-
-                    # Flush to disk periodically
-                    if (
-                        len(self.trajectory)
-                        % (flush_frequency // self.config.save_interval)
-                        == 0
-                    ):
-                        print(f"\nFlushing {len(self.trajectory)} frames to disk...")
 
                 # Run production diagnostics
                 if (
