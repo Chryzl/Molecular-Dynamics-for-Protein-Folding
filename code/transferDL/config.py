@@ -26,7 +26,7 @@ class Config:
     sgld_noise_scale: float = 1e-2  # σ in method section # 1e-3 too low
 
     # Phase 3: Production (SGLD)
-    phase3_steps: int = 200_000
+    phase3_steps: int = 2_000_000
     save_interval: int = 25  # τ_save
 
     # Validation
