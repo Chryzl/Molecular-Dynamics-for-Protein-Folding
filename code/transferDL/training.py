@@ -8,7 +8,7 @@ from pathlib import Path
 from tqdm import tqdm
 import numpy as np
 
-from model import MLP
+from model import MLP, CNN
 from optimizers import SGLD
 from monitoring import TrainingMonitor
 from utils import (
@@ -28,16 +28,26 @@ class ThreePhaseTrainer:
     Phase 3: Production (SGLD + trajectory saving)
     """
 
+    def _model_getter(self):
+        if self.config.model_type == "FFN":
+            self.model = MLP(
+                input_dim=self.config.input_dim,
+                hidden_dim=self.config.hidden_dim,
+                output_dim=self.config.output_dim,
+            ).to(self.device)
+        elif self.config.model_type == "CNN":
+            self.model = CNN(
+                output_dim=self.config.output_dim,
+            ).to(self.device)
+        else:
+            raise ValueError(f"Unknown model type: {self.config.model_type}")
+
     def __init__(self, config: Config, device: str = "cuda"):
         self.config = config
         self.device = torch.device(device if torch.cuda.is_available() else "cpu")
 
         # Initialize model
-        self.model = MLP(
-            input_dim=config.input_dim,
-            hidden_dim=config.hidden_dim,
-            output_dim=config.output_dim,
-        ).to(self.device)
+        self._model_getter()
 
         print(f"Model initialized with {self.model.count_parameters()} parameters")
 
@@ -388,11 +398,7 @@ class ThreePhaseTrainer:
             np.random.seed(42 + i)
 
             # Reinitialize model for each replica
-            self.model = MLP(
-                input_dim=self.config.input_dim,
-                hidden_dim=self.config.hidden_dim,
-                output_dim=self.config.output_dim,
-            ).to(self.device)
+            self._model_getter()
 
             # Reinitialize monitor for each replica with correct ID
             self.monitor = TrainingMonitor(self.config, replica_id=i)
