@@ -127,7 +127,7 @@ class TrainingMonitor:
             self.writer.add_scalar("Phase3/GradientNorm", grad_norm, step)
 
         # Store trajectory parameters for PCA visualization
-        if theta is not None:
+        if theta is not None and False:  # disable for memory and performance
             self.trajectory_params.append(theta)
 
             # Plot PCA projection periodically
