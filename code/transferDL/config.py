@@ -9,7 +9,7 @@ class Config:
     """Hyperparameters and settings for the three-phase training protocol."""
 
     # Architecture
-    model_type: str = "CNN"  # "FFN" or "CNN"
+    model_type: str = "FFN"  # "FFN" or "CNN"
     input_dim: int = 784  # For FFN (28*28)
     hidden_dim: int = 32  # For FFN only
     output_dim: int = 10
@@ -26,8 +26,8 @@ class Config:
     sgld_noise_scale: float = 1e-2  # σ in method section # 1e-3 too low
 
     # Phase 3: Production (SGLD)
-    phase3_steps: int = 2_000_000
-    save_interval: int = 25  # τ_save
+    phase3_steps: int = 20_000_000
+    save_interval: int = 1000  # τ_save
 
     # Validation
     num_replicas: int = 1
