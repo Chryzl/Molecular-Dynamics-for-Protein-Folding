@@ -299,26 +299,17 @@ For the CNN, we performed a production run of $2 \times 10^6$ steps, saving the 
 The resulting trajectories of the network parameters $\theta(t)$ were analyzed using Principal Component Analysis (PCA) and Time-lagged Independent Component Analysis (TICA) to identify slow collective variables and visualize the dynamics in a reduced-dimensional space. The analysis was performed using the DeepTime library \cite{hoffmann2021deeptime}.
 
 \subsection{Results and Discussion}
-% After training the CNN, we project the training trajectory onto the first two TICA components for lag times 1 and 4000 FIGURE X
-% We can see that it formes a a parabola for tau 1 and a circle for tau 4000
-% These shapes are closely related to those plotted by "TICA and Protein Folding and Random Walks"
-% They find, that these shapes appear if the process underlying the dynamics is a random walk
-% Therefore, we can conclude that the training dynamics of the CNN are closely related to a random walk in parameter space
-% Conversely, we do not visualize the loss landscape directly and cannot conclude anything about its shape
+Despite the significant difference in the number of parameters between the FFN (24k) and the CNN (1k), both models achieved similar test accuracies of over 90\% on the MNIST dataset after the minimization phase and maintained this performance during the SGLD production runs. This indicates that both models were able to effectively learn the task and that the additional noise introduced by SGLD dynamics did not derail their performance.
 
-% We can futher support this conclusion by looking at the PCA projection of the training trajectory FIGURE Y (for PC1 x PC2 and PC2 x PC3)
-% Here, we see that the trajectory also forms a path and not a point cloud
-% These findings align with the work of (NeurIPS paper about PCA of random walks = cosise eigenfunctions)
-% In fact, our curves closely aling with Lissajous curves
-% NEURIPS PAPER find that if the dimensionality of the random walk (i.e., the number of parameters of the NN) is high enough compared to the number of steps (i.e., training steps), the PCA projection will closely resemble Lissajous curves, which result from cosine like eigenfunctions
+If we look at the TICA projection onto the first 2 components for the FFN and CNN training trajectories (Figure \TODO{Ref}), we observe that both trajectories form distinct paths rather than point clouds, which we would expect if we sampled the loss-landscape. Specifically, we see that both trajectories exhibit a clear parabolic shape at lag-time $\tau=10$ and a circular shape at lag-time $\tau=4000$. However, it is also visible that the smaller CNN model's projections show a broader path traced out in the TICA projection compared to the FFN.
 
-% All this strongly suggests that the observed training dynamics of the specific CNN we trained are a result of a high-dimensional random walk in parameter space, and does not give us direct insights into the loss landscape itself
-% The problem appears to be solvable by either reducing the dimensionality of the NN or by increasing the number of training steps
-% However, our CNN is already extraordinarily small compared to typical NNs used in practice, or even state-of-the-art large language models
-% Also, in proteins, physical knowledge allows us to reduce the dimensionality of the system significantly by, e.g., only looking at backbone ca atoms. In NNs, we do not have such physical knowledge to reduce the dimensionality meaningfully
-% Therefore, we can conclude that investigating training dynamics of practical NNs via MD analysis tools, like TICA and MSMs, is practically simply not feasible
-% However, to the best of our knowledge, this is the first work to propose the transfer operator formalism as a framework to analyze neural network training dynamics. Despite the sobering results, we believe that this framework could enable more mathematically grounded analysis of neural network training dynamics in the future.
+These observed shapes in the TICA projections are very similar to those reported by Schultze et al. \cite{schultze2021time} in their study of TICA applied to random walks in the context of protein folding. They find that molecular dynamics simulations that have not converged to the stationary distribution or sampled the state space sufficiently exhibit TICA projections that resemble those of random walks. Therefore, we can conclude that the training dynamics of both the FFN and CNN much more closely related to a high-dimensional random walk in parameter space rather than a meaningful exploration of the loss landscape itself, at least within the timescales we simulated.
 
+These findings are further supported by the PCA projections of the training trajectories (Figure \TODO{Ref}). Similar to the TICA projections, we observe that both the FFN and CNN training trajectories form distinct paths in the PCA space, which aligns with findings from Antognini et al. \cite{antognini2018pca}. They show that PCA projections of high-dimensional random walks result in Lissajous curves due to the cosine-like nature of the eigenfunctions. They show this explicitly if the dimensionality of the system is much larger than the number of time steps. However, even for the CNN with only 1k parameters but 80k saved steps, we observe similar behavior, indicating that the training dynamics are dominated by random-walk-like behavior in parameter space.
+
+The resemblance of our projected trajectories to high-dimensional random walks suggests that the system primarily underwent diffusive motion on the simulated timescales, rather than discrete transitions between meta-stable basins. Crucially, this was not due to excessive noise, as both models maintained high test accuracy ($>90\%$), indicating confinement within a valid solution manifold. Instead, the lack of structured transitions likely stems from the immense volume of the parameter space (even for the tiny CNN) requiring significantly longer sampling to observe rare events, much like in protein folding.
+
+To the best of our knowledge, this work is the first to propose the transfer operator formalism as a framework for analyzing neural network training dynamics. Practical application is currently limited by the high dimensionality of NNs. In protein folding, systems with thousands of atoms can be effectively reduced to a few degrees of freedom by focusing on intuitive order parameters, such as backbone dihedral angles or $C_\alpha$ positions. In contrast, even for our tiny CNN with only $\approx 1000$ parameters, no such intuitive collective variables exist to filter out the high-dimensional noise. However, the transfer operator formalism could provide a solid mathematical foundation for future work on investigating NN training dynamics theoretically.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
