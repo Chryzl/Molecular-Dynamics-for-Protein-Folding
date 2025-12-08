@@ -2,6 +2,8 @@
 *.pdf
 build/*
 
+!figures/*.pdf
+
 */__pycache__/
 *.pyc
 *.pyo
