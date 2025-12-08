@@ -252,20 +252,27 @@ Training neural networks (NNs) is a complex optimization process as the loss lan
 In this section, we draw parallels between molecular dynamics (MD) simulations and NN training dynamics. Specifically, we think about training a NN as akin to folding a protein, where the parameters of the NN correspond to the atomic coordinates of the protein, and the loss landscape corresponds to the energy landscape. Both processes involve navigating a high-dimensional landscape to reach a favorable configuration (low loss or low energy). Given the success and mathematical foundation of MD analysis techniques such as TICA and MSMs (see Sections \TODO{Ref} and \TODO{Ref}), we aim to investigate if these tools can be applied to analyze NN training dynamics.
 
 \subsection{Linking Molecular Dynamics and Neural Network Training}
-% It has been shown that using SGD to train neural networks is equivalent to a markovian process. The update function is: XYZ
-% Furthermore, Bayesian learning, especially SGLD explicitly introduce noise into the training process, to sample from the posterior distribution of the parameters, where the dynamics follow thoes of Langevin dynamics. The update function is: XYZ
-% It is not hard to see that if SGD is a markovian process, then SGLD is also a markovian process, just with added noise, which is independent of the current state, thus not breaking the markovian property.
-% Additionally, by the langevin dynamics invoked by SGLD, the stationary distribution of the parameters is known to be the boltzmann distribution over the loss landscape, similar to MD simulations: Boltzmann
-% Therefore, we can reasonably assume that the training of neural networks is ergodic with a known stationary distribution
-% Also, given that the learning rate is constant, we set out to investigate if the training dynamics are also reversible
+We set out to investigate the mathematical similarities between molecular dynamics (MD) simulations and neural network (NN) training dynamics. Specifically, we want to explore if the transfer operator formalism used in MD analysis can be applied to understand NN training dynamics, and must therefore investigate if the assumptions of markovianty, ergodicity, and reversibility hold for NN training dynamics (see Section \TODO{ref}).
 
-% These mathematical similarities raise the question of whether we can apply tools from MD analysis to understand the dynamics of neural network training. 
-% In particular, we propose to view the training of neural networks through the lens of the transfer operator formalism
-% In Bayesian learning, we do not aim for a single optimal set of parameters, but rather want to sample from the posterior distribution over the parameters given the data
-% Therefore, we can propose the transfer operator formalism as a framework to analyze the dynamics of neural network training via defining its action on a distribution over the parameters akin to Equation \ref{eq:intro:propagator}: XYZ
-% If the assumtions of markovianty, ergodicity and reversibility hold, we can then apply tools such as TICA and MSMs to analyze the training dynamics, potentially giving us not only insights into training dynamics, but a general framework to analyze neural network training akin to MD analysis
+Neural network training is typically performed using variants of Stochastic Gradient Descent (SGD) \cite{ruder2016overview}. Previous research has shown that SGD with a constant learning rate simulates a Markovian process \cite{mandt2017stochastic}. Specifically, the update rule for SGD can be expressed as:
+\begin{equation}
+    \theta_{t+1} = \theta_t - \eta \nabla L(\theta_t; \mathcal{B}_t)
+\end{equation}
+where $\theta_t$ are the parameters at time step $t$, $\eta$ is the learning rate, $\nabla L(\theta_t; \mathcal{B}_t)$ is the gradient of the loss function computed on a mini-batch $\mathcal{B}_t$ \cite{amari1993backpropagation}. To draw the parallel to MD simulations, the SDG update rule would thus be akin to an integration scheme for simulating the dynamics of a particle in a potential energy landscape.
 
-% We therefore set out to investigate if the assumptions of markovianty, ergodicity and reversibility hold for neural network training dynamics, and then to investigate training dynamics of small NNs.
+However, unlike MD simulations, the stochasticity in SGD arises from the random sampling of mini-batches rather than thermal fluctuations \cite{mandt2017stochastic}. An analog to a Langevin thermostat in MD simulations \cite{davidchack2009langevin} can be taken from Bayesian learning methods such as Stochastic Gradient Langevin Dynamics (SGLD). SGLD introduces noise into the training process such that its dynamics follow those of Langevin dynamics. \cite{welling2011bayesian} The update rule for SGLD is given by:
+\begin{equation}
+    \theta_{t+1} = \theta_t - \eta \nabla L(\theta_t; \mathcal{B}_t) + \sqrt{2 \eta} \cdot \epsilon_t \; \text{with} \; \epsilon_t \sim \mathcal{N}(0, I)
+\end{equation}
+where $\epsilon_t$ is Gaussian noise \cite{welling2011bayesian}. Given the Fokker-Planck equation associated with Langevin dynamics, SGLD has a known stationary distribution corresponding to the Boltzmann distribution over the loss landscape \cite{fuller1969analysis}.
+
+Given that SGD with a constant learning rate is a Markovian process \cite{mandt2017stochastic}, constant SGLD is also Markovian, as the added noise is independent of the current state and does not break the Markovian property. Additionally, following Prinz et al. \cite{prinz2011markov}, we can reasonably assume that NN training via SGDL is sufficiently ergodic since it gives rise to a defined stationary distribution. Lastly, it remains open if the training dynamics are reversible.
+
+Given these mathematical similarities to molecular dynamics simulations, we propose to view the training of neural networks through the lens of the transfer operator formalism. More precisely, we consider Bayesian learning methods, which do not aim for a single optimal set of parameters, but rather seek to sample from the posterior distribution over the parameters given the data, i.e., estimating the likelihood of parameters given the data \cite{chen2025interplay}. Thus, we can define the action of the propagator operator on a distribution over the parameters akin to Equation \ref{eq:intro:propagator}:
+\begin{equation}
+    p(\theta, t + \tau) = \mathcal{P}(\tau) p(\theta, t)
+\end{equation}
+where $p(\theta, t)$ is the distribution over the parameters $\theta$ at time $t$. If the assumptions of markovianty, ergodicity, and reversibility hold, we can then apply tools such as TICA and MSMs to analyze the training dynamics, potentially providing insights into training dynamics and establishing a general framework to analyze neural network training akin to MD analysis.
 
 \subsection{Methods}
 % Short method section
