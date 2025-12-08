@@ -1,68 +1,93 @@
 #!/usr/bin/env python3
-"""Extract representative structures for local minima in a 2D FES (PC1 vs PC2).
+"""Plot Free Energy Surface (FES) using TICA and MSM weights.
 
 Usage example:
-  python code/extract_minima_structures.py \
+  python code/Figures/extract_minima_structures.py \
     --xtc-dir code/data/Chignolin/xtc \
     --top code/data/Chignolin/topology.pdb \
-    --nminima 3 \
-    --outdir structures
+    --outdir figures
 
-The script recomputes the same features and TICA transform used in
-`code/Figures/Chignolin_FES.py` and finds local minima on the free-energy grid.
-For each minima it picks the closest trajectory frame in (PC1,PC2) space and
-saves a PDB snapshot.
+The script computes TICA features (pairwise CA distances), builds an MSM,
+and plots the reweighted Free Energy Surface.
 """
 import argparse
 import glob
 import os
 import numpy as np
 import MDAnalysis as mda
-from MDAnalysis.analysis import align
 import MDAnalysis.transformations as trans
 import matplotlib.pyplot as plt
 from deeptime.decomposition import TICA
+from deeptime.clustering import KMeans
+from deeptime.markov.msm import MaximumLikelihoodMSM
+from deeptime.util import energy2d
+from tqdm import tqdm
+
+# Set matplotlib style for publication quality
+plt.rcParams.update(
+    {
+        "font.size": 8,
+        "axes.titlesize": 8,
+        "axes.labelsize": 8,
+        "xtick.labelsize": 7,
+        "ytick.labelsize": 7,
+        "legend.fontsize": 7,
+        "figure.titlesize": 9,
+        "font.family": "serif",
+    }
+)
 
 
-def free_energy(x, y, kBT=2.5, bins=100):
-    hist, xedges, yedges = np.histogram2d(x, y, bins=bins, density=True)
-    F = -kBT * np.log(hist + 1e-12)
-    return F, xedges, yedges
+def compute_ca_pairwise_distances(universe, ca_atoms):
+    """Compute pairwise distances between CA atoms.
 
+    Args:
+        universe: MDAnalysis Universe
+        ca_atoms: AtomGroup of CA atoms
 
-def find_local_minima(F):
-    minima = []
-    nx, ny = F.shape
-    for i in range(1, nx - 1):
-        for j in range(1, ny - 1):
-            val = F[i, j]
-            # compare with 8 neighbors
-            neigh = F[i - 1 : i + 2, j - 1 : j + 2]
-            if val <= np.min(neigh) and (neigh.shape == (3, 3)):
-                # ensure strictly less than at least one neighbor to avoid flat regions
-                if np.any(neigh != val):
-                    minima.append((val, i, j))
-    return minima
+    Returns:
+        Array of shape (n_frames, n_pairs) with pairwise distances
+    """
+    n_ca = len(ca_atoms)
+    n_pairs = (n_ca * (n_ca - 1)) // 2
+    n_frames = len(universe.trajectory)
+
+    distances = np.empty((n_frames, n_pairs), dtype=float)
+
+    # Create pairs indices
+    pairs = []
+    for i in range(n_ca):
+        for j in range(i + 1, n_ca):
+            pairs.append((i, j))
+
+    for frame_idx, ts in enumerate(
+        tqdm(universe.trajectory, desc="Computing CA distances")
+    ):
+        pos = ca_atoms.positions
+        for pair_idx, (i, j) in enumerate(pairs):
+            distances[frame_idx, pair_idx] = np.linalg.norm(pos[i] - pos[j])
+
+    return distances
 
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--xtc-dir", required=True)
-    p.add_argument("--top", required=True)
-    p.add_argument("--nminima", type=int, default=3)
-    p.add_argument("--bins", type=int, default=100)
-    p.add_argument("--lag", type=int, default=10)
+    p.add_argument("--xtc-dir", default="code/data/Chignolin/xtc")
+    p.add_argument("--top", default="code/data/Chignolin/topology.pdb")
     p.add_argument(
-        "--align-selection",
-        default="protein and backbone",
-        help="MDAnalysis selection string used for fitting (e.g. 'name CA' or 'protein and backbone')",
+        "--n-clusters", type=int, default=100, help="Number of clusters for KMeans"
     )
-    p.add_argument("--outdir", default="structures")
+    p.add_argument(
+        "--bins", type=int, default=80, help="Number of bins for energy2d grid"
+    )
+    p.add_argument("--lag", type=int, default=10, help="Lagtime for TICA and MSM")
+    p.add_argument("--kbt", type=float, default=2.5, help="kBT for energy calculation")
+    p.add_argument("--outdir", default="figures")
     args = p.parse_args()
 
     os.makedirs(args.outdir, exist_ok=True)
 
-    xtc_files = [sorted(glob.glob(os.path.join(args.xtc_dir, "*.xtc")))[1]]
+    xtc_files = sorted(glob.glob(os.path.join(args.xtc_dir, "*.xtc")))
     if len(xtc_files) == 0:
         raise SystemExit(f"No .xtc files found in {args.xtc_dir}")
 
@@ -79,88 +104,75 @@ def main():
     ]
     u.trajectory.add_transformations(*transforms)
 
-    # compute CA Cartesian coordinates (flattened) from the aligned Universe (in memory)
-    n_frames = len(u.trajectory)
+    # Select CA atoms
     ca = u.select_atoms("name CA")
     n_ca = len(ca)
     if n_ca < 1:
         raise SystemExit("No CA atoms found to extract coordinates.")
+    n_frames = len(u.trajectory)
     print(f"Total frames: {n_frames}")
-    print(f"Collecting CA Cartesian coordinates (n_ca={n_ca}) per frame (in memory)...")
+    print(f"Number of CA atoms: {n_ca}")
 
-    # feature matrix: frames x (n_ca * 3)
-    X = np.empty((n_frames, n_ca * 3), dtype=float)
-    for i, ts in enumerate(u.trajectory):
-        pos = ca.positions  # (n_ca, 3)
-        X[i, :] = pos.reshape(-1)
+    # Compute pairwise CA distances as features
+    print("Computing pairwise CA distances...")
+    X = compute_ca_pairwise_distances(u, ca)
+    print(f"Feature matrix shape: {X.shape}")
 
-    # TICA/PCA-like transform (matches the FES generation script)
+    # TICA transform
+    print(f"Fitting TICA with lagtime={args.lag}...")
     tica = TICA(lagtime=args.lag)
     tica.fit(X)
     pcs = tica.transform(X)
+    print(f"TICA output shape: {pcs.shape}")
 
     pc1 = pcs[:, 0]
     pc2 = pcs[:, 1]
+    traj_concat = np.column_stack([pc1, pc2])
 
-    # compute free energy
-    F, xedges, yedges = free_energy(pc1, pc2, bins=args.bins)
+    # KMeans clustering in TICA space
+    print(f"Clustering with {args.n_clusters} clusters...")
+    clustering = KMeans(n_clusters=args.n_clusters).fit_fetch(traj_concat)
+    dtraj = clustering.transform(traj_concat)
 
-    # Plot single-axis Free Energy Surface (PC1 vs PC2)
-    try:
-        fig, ax = plt.subplots(figsize=(6, 5))
-        c = ax.imshow(
-            F.T,
-            extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-            origin="lower",
-            cmap="turbo",
-            aspect="auto",
-        )
-        ax.set_title("Free Energy Surface")
-        ax.set_xlabel("PC1")
-        ax.set_ylabel("PC2")
-        fig.colorbar(c, ax=ax, label="Free energy (kBT)")
-        outfig = os.path.join(args.outdir, "fes.png")
-        fig.tight_layout()
-        fig.savefig(outfig, dpi=200)
-        plt.close(fig)
-        print(f"Saved FES plot to {outfig}")
-    except Exception as e:
-        print("Failed to create FES plot:", e)
+    # Build MSM
+    print(f"Building MSM with lagtime={args.lag}...")
+    msm = MaximumLikelihoodMSM(lagtime=args.lag).fit_fetch([dtraj])
 
-    # find local minima on the grid
-    minima = find_local_minima(F)
-    if len(minima) == 0:
-        print("No local minima found on the grid; using global minimum instead.")
-        flat_idx = np.argmin(F)
-        i, j = np.unravel_index(flat_idx, F.shape)
-        minima = [(F[i, j], i, j)]
+    # Compute trajectory weights
+    print("Computing trajectory weights from MSM...")
+    weights = msm.compute_trajectory_weights([dtraj])[0]
 
-    # sort minima by energy
-    minima_sorted = sorted(minima, key=lambda x: x[0])
+    # Compute free energy surface using energy2d with MSM weights
+    print("Computing free energy surface...")
+    energies = energy2d(
+        pc1,
+        pc2,
+        bins=(args.bins, args.bins),
+        kbt=args.kbt,
+        weights=weights,
+        shift_energy=True,
+    )
 
-    # take top n
-    chosen = minima_sorted[: args.nminima]
+    # Plot Free Energy Surface using energy2d plot method
+    print("Creating FES plot...")
+    # IEEE column width is ~3.5 inches. We make it slightly thinner.
+    fig, ax = plt.subplots(figsize=(3.25, 2.5))
 
-    xcenters = 0.5 * (xedges[:-1] + xedges[1:])
-    ycenters = 0.5 * (yedges[:-1] + yedges[1:])
+    # Plot FES
+    ax, contour, cbar = energies.plot(ax=ax, contourf_kws=dict(cmap="nipy_spectral"))
 
-    results = []
-    for idx, (val, i, j) in enumerate(chosen):
-        xc = xcenters[i]
-        yc = ycenters[j]
-        # find nearest frame in PC space
-        d2 = (pc1 - xc) ** 2 + (pc2 - yc) ** 2
-        frame_idx = int(np.argmin(d2))
-        outpath = os.path.join(args.outdir, f"minima_{idx+1}_frame{frame_idx}.pdb")
-        # write snapshot from the aligned Universe (in-memory)
-        u.trajectory[frame_idx]
-        u.atoms.write(outpath)
-        results.append((idx + 1, val, i, j, xc, yc, frame_idx, outpath))
+    cbar.set_label("Free Energy / $k_B T$")
+    ax.set_title(f"FES (TICA lag={args.lag})")
+    ax.set_xlabel("TIC 1")
+    ax.set_ylabel("TIC 2")
 
-    print("Saved representative structures:")
-    for r in results:
-        print(f"Minima {r[0]}: energy={r[1]:.3f}, grid=(i={r[2]},j={r[3]}), ")
-        print(f"  center=(PC1={r[4]:.4f}, PC2={r[5]:.4f}), frame={r[6]}, file={r[7]}")
+    outfig = os.path.join(args.outdir, f"fes_msm_tau{args.lag}.pdf")
+    fig.tight_layout()
+    fig.savefig(outfig, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    print(f"Saved MSM-weighted FES plot to {outfig}")
+
+    print("\nDone! Free energy surface computed using MSM-weighted approach.")
 
 
 if __name__ == "__main__":
