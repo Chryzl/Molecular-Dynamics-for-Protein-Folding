@@ -26,7 +26,7 @@ kt = 1.0  # Thermal energy
 # Wells at approx: 12, 38, 62, 88
 # Barriers at: 25, 50, 75
 key_points_x = [1, 12, 25, 38, 50, 62, 75, 88, 100]
-key_points_y = [10, 2, 6, 3, 9, 1.5, 4, 2, 10]
+key_points_y = [10, 2, 6, 2.5, 9, 1.5, 4, 2, 10]
 
 # Fit a spline
 spline = UnivariateSpline(key_points_x, key_points_y, s=0, k=3)
@@ -95,7 +95,7 @@ for i in range(4):
 # 4. Plotting (Recreating the Figure)
 # ==========================================
 # IEEE column width is ~3.5 inches.
-fig, axes = plt.subplots(3, 1, figsize=(3.5, 6), constrained_layout=True)
+fig, axes = plt.subplots(3, 1, figsize=(3.5, 4), constrained_layout=True)
 
 # Font sizes for IEEE style
 plt.rcParams.update({"font.size": 8})
@@ -120,41 +120,37 @@ ax2.fill_between(x_grid, mu, color="gray", alpha=0.3)
 # Title
 ax.set_title("(a)", loc="left", fontsize=title_fontsize, pad=10)
 
-# (b) Dominant Eigenfunctions (psi)
-ax = axes[1]
+# (c) Dominant Eigenfunctions (psi)
+ax = axes[2]
 spacing = 2.5
-offsets = [spacing * i for i in range(3, -1, -1)]  # [7.5, 5.0, 2.5, 0.0]
+offsets = [spacing * i for i in range(2, -1, -1)]  # [7.5, 5.0, 2.5, 0.0]
 colors = ["#C0392B", "#E67E22", "#7DCEA0", "#2980B9"]  # Red, Orange, Green, Blue
 
 # Manual sign flip to match reference (eigenvectors are arbitrary up to sign)
-signs = [1, -1, -1, -1]
+signs = [-1, 1, 1, 1]
 
-for i in range(4):
+for i in range(3):
     y_data = psi[:, i] * signs[i]
     ax.plot(x_grid, y_data + offsets[i], color=colors[i], linewidth=1.5)
     ax.axhline(offsets[i], color="k", linewidth=0.5, linestyle="--")
     ax.fill_between(x_grid, y_data + offsets[i], offsets[i], color=colors[i], alpha=0.3)
 
 ax.set_yticks(offsets)
-ax.set_yticklabels(
-    [r"$\psi_1$", r"$\psi_2$", r"$\psi_3$", r"$\psi_4$"], fontsize=label_fontsize
-)
+ax.set_yticklabels([r"$\psi_1$", r"$\psi_2$", r"$\psi_3$"], fontsize=label_fontsize)
 ax.grid(axis="x", linestyle=":", alpha=0.6)
 ax.tick_params(axis="x", labelsize=label_fontsize)
 ax.set_title("(b)", loc="left", fontsize=title_fontsize, pad=10)
 
-# (c) Weighted Eigenfunctions (phi)
-ax = axes[2]
-for i in range(4):
+# (b) Weighted Eigenfunctions (phi)
+ax = axes[1]
+for i in range(3):
     y_data = phi[:, i] * signs[i]
     ax.plot(x_grid, y_data + offsets[i], color=colors[i], linewidth=1.5)
     ax.axhline(offsets[i], color="k", linewidth=0.5, linestyle="--")
     ax.fill_between(x_grid, y_data + offsets[i], offsets[i], color=colors[i], alpha=0.3)
 
 ax.set_yticks(offsets)
-ax.set_yticklabels(
-    [r"$\phi_1$", r"$\phi_2$", r"$\phi_3$", r"$\phi_4$"], fontsize=label_fontsize
-)
+ax.set_yticklabels([r"$\phi_1$", r"$\phi_2$", r"$\phi_3$"], fontsize=label_fontsize)
 ax.grid(axis="x", linestyle=":", alpha=0.6)
 ax.tick_params(axis="x", labelsize=label_fontsize)
 ax.set_title("(c)", loc="left", fontsize=title_fontsize, pad=10)
