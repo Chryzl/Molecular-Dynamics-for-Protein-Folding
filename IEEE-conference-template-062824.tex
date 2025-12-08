@@ -275,9 +275,28 @@ Given these mathematical similarities to molecular dynamics simulations, we prop
 where $p(\theta, t)$ is the distribution over the parameters $\theta$ at time $t$. If the assumptions of markovianty, ergodicity, and reversibility hold, we can then apply tools such as TICA and MSMs to analyze the training dynamics, potentially providing insights into training dynamics and establishing a general framework to analyze neural network training akin to MD analysis.
 
 \subsection{Methods}
-% Short method section
-% We train NN for MNIST --> 50k FFN, 1k CNN, would be the equiv. of atoms
-% Bla bla the rest of all methods
+To investigate the applicability of MD analysis tools to deep learning, we performed simulations of neural network training treating the network parameters as the coordinates of a physical system. We utilized the MNIST dataset of handwritten digits \cite{deng2012mnist}.
+
+\subsubsection{Model Architectures}
+We investigated two distinct model architectures to explore different regimes of the parameter space. First, a simple Feed-Forward Network (FFN) with an input dimension of 784, a single hidden layer of 32 units, and an output dimension of 10, resulting in approximately 24k trainable parameters. Second, a tiny Convolutional Neural Network (CNN) consisting of two convolutional layers followed by a fully connected layer, totaling approximately 1k parameters.
+
+\subsubsection{Simulation Protocol}
+The training process was designed to mimic a standard MD simulation protocol consisting of minimization, equilibration, and production phases.
+\begin{itemize}
+    \item \textbf{Minimization (Phase 1):} The models were first trained using standard Stochastic Gradient Descent (SGD) for 20 epochs to reach a local minimum in the loss landscape. This corresponds to the energy minimization step in MD.
+    \item \textbf{Equilibration (Phase 2):} We then switched to the Stochastic Gradient Langevin Dynamics (SGLD) optimizer. The system was evolved for 10,000 steps to allow the parameters to equilibrate to the stationary distribution defined by the noise scale.
+    \item \textbf{Production (Phase 3):} Finally, we performed a long production run using SGLD to sample the parameter space.
+\end{itemize}
+The SGLD update rule used is given by:
+\begin{equation}
+    \theta_{t+1} = \theta_t - \eta \nabla L(\theta_t) + \sqrt{2\eta} \sigma \epsilon
+\end{equation}
+where $\eta$ is the learning rate, $\sigma$ is the noise scale, and $\epsilon \sim \mathcal{N}(0, I)$ is Gaussian noise.
+
+For the CNN, we performed a production run of $2 \times 10^6$ steps, saving the system state every 25 steps. For the FFN, due to the larger parameter space, we extended the production run to $20 \times 10^6$ steps, saving every 2,000 steps. Due to computational constraints, only a single replicate was simulated for each model.
+
+\subsubsection{Analysis}
+The resulting trajectories of the network parameters $\theta(t)$ were analyzed using Principal Component Analysis (PCA) and Time-lagged Independent Component Analysis (TICA) to identify slow collective variables and visualize the dynamics in a reduced-dimensional space. The analysis was performed using the DeepTime library \cite{hoffmann2021deeptime}.
 
 \subsection{Results and Discussion}
 % After training the CNN, we project the training trajectory onto the first two TICA components for lag times 1 and 4000 FIGURE X
